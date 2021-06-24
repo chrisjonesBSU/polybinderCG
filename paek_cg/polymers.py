@@ -290,10 +290,10 @@ class Molecule(Structure):
         """
         """
         if self.sequence is None:
-            raise ValueError("
-                    The sequence for each molecule must be set "
+            raise ValueError(
+                    "The sequence for each molecule must be set "
                     "before the bead types can be assigned. "
-                    "See the `Molecule.sequence attribute"
+                    "See the `Molecule.sequence attribute."
                     )
         if use_monomers:
             n = self.n_monomers // len(self.sequence)
