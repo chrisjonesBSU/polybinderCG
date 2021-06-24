@@ -1,6 +1,6 @@
 from cmeutils import gsd_utils
 from cmeutils.gsd_utils import snap_molecule_cluster
-from cmeutils.plotting import plot_distribution
+from plotting import plot_distribution
 import freud
 import matplotlib.pyplot as plt
 import numpy as np
@@ -62,7 +62,7 @@ class System:
             for component in monomer.components:
                 yield component
     
-    def end_to_end_avg(self, squared=False):
+    def end_to_end_avg(self, squared=True):
         """Returns the end-to-end distance averaged over each
         molecule in the system.
 
@@ -282,13 +282,27 @@ class Molecule(Structure):
         self.components = []
         self.sequence = None
 
-    def assign_types(self):
-        n = self.n_monomers // len(self.sequence)
-        monomer_sequence = self.sequence * n
-        monomer_sequence += self.sequence[:(self.n_monomers
-            - len(monomer_sequence))]
-        for i, name in enumerate(list(monomer_sequence)):
-            self.monomers[i].name = name
+    def assign_types(self,
+            use_monomers=True,
+            use_segments=False,
+            use_components=False
+            ):
+        """
+        """
+        if self.sequence is None:
+            raise ValueError("
+                    The sequence for each molecule must be set "
+                    "before the bead types can be assigned. "
+                    "See the `Molecule.sequence attribute"
+                    )
+        if use_monomers:
+            n = self.n_monomers // len(self.sequence)
+            monomer_sequence = self.sequence * n
+            monomer_sequence += self.sequence[:(self.n_monomers
+                - len(monomer_sequence))]
+            for i, name in enumerate(list(monomer_sequence)):
+                self.monomers[i].name = name
+
 
     def generate_segments(self, monomers_per_segment):
         """
@@ -523,6 +537,8 @@ class Monomer(Structure):
         assert self.n_atoms == self.system.atoms_per_monomer 
         
     def generate_components(self, index_mapping):
+        """
+        """
         if self.components:
             raise ValueError("Components have already been generated")
         components = []
@@ -559,9 +575,6 @@ class Segment(Structure):
         assert len(self.monomers) ==  int(
                 self.n_atoms / self.system.atoms_per_monomer
                 )
-
-    def end_to_end_distance(self):
-        pass
      
     def bond_vectors(self):
         """Generates a list of the vectors connecting subsequent monomer units.
