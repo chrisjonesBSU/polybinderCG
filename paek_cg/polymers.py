@@ -1,6 +1,6 @@
 from cmeutils import gsd_utils
 from cmeutils.gsd_utils import snap_molecule_cluster
-from plotting import plot_distribution
+from paek_cg.plotting import plot_distribution
 import freud
 import matplotlib.pyplot as plt
 import numpy as np
