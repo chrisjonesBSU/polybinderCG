@@ -62,6 +62,46 @@ class System:
             for component in monomer.components:
                 yield component
     
+    def bond_angles(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            degrees=False):
+        """
+        """
+        if use_monomers:
+            structures = [i for i in self.monomers()]
+        elif use_segments:
+            structures = [i for i in self.segments()]
+        elif use_components:
+            structures = [i for i in self.components()]
+
+        angles = []
+        for idx, s in enumerate(structures):
+            try:
+                if all(
+                        [i.parent == s.parent for i in [
+                            structures[idx+1], structures[idx+2]
+                            ]
+                        ]
+                    ):
+                    v1 = (s.unwrapped_center -
+                            structures[idx+1].unwrapped_center)
+                    v2 = (structures[idx+2].unwrapped_center -
+                            structures[idx+1].center)
+                    cos_angle = (
+                        np.dot(v1, v2) /
+                        (np.linalg.norm(v1)*np.linalg.norm(v2))
+                        )
+                    angle = np.arccos(cos_angle)
+                    if degrees:
+                        angle = np.degrees(angle)
+                    angles.append(angle)
+            except IndexError:
+                pass
+        return angles
+
     def end_to_end_avg(self, squared=True):
         """Returns the end-to-end distance averaged over each
         molecule in the system.
