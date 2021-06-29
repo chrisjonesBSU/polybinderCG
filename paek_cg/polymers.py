@@ -511,8 +511,8 @@ class Molecule(Structure):
                         sub_structures[idx+1].unwrapped_center
                         )
                 next_vector = (
-                        sub_structures[idx+1].unwrapped_center - 
-                        sub_structures[idx+2].unwrapped_center
+                        sub_structures[idx+2].unwrapped_center - 
+                        sub_structures[idx+1].unwrapped_center
                         )
                 cos_angle = (
                         np.dot(vector, next_vector) /

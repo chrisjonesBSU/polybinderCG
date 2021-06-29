@@ -4,10 +4,10 @@ import freud
 import numpy as np
 import re
 
-def write_snapshot(beads):
+def write_snapshot(beads, rewrap):
     """
     beads : iterable, required
-        An iterable of any of the structure classes in cmeutils polymer.py
+        An iterable of any of the structure classes in polymer.py
         If you want to coarse-grain based on monomers, pass in a list of
         System's monomers.
     """
@@ -46,9 +46,14 @@ def write_snapshot(beads):
     angle_ids = [np.where(np.array(angles)==i)[0][0] for i in all_angles]
 
     #Wrap the particle positions
-    fbox = freud.box.Box(*box)
-    w_positions = fbox.wrap(all_pos)
-    w_images = fbox.get_images(all_pos)
+    if rewrap:
+        fbox = freud.box.Box(*box)
+        w_positions = fbox.wrap(all_pos)
+        w_images = fbox.get_images(all_pos)
+    else:
+        box *= 50 
+        w_positions = all_pos
+        w_images = np.array([[0,0,0] for i in all_pos])
 
     s = gsd.hoomd.Snapshot()
     #Particles
