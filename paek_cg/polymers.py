@@ -80,16 +80,11 @@ class System:
         angles = []
         for idx, s in enumerate(structures):
             try:
-                if all(
-                        [i.parent == s.parent for i in [
-                            structures[idx+1], structures[idx+2]
-                            ]
-                        ]
-                    ):
-                    v1 = (s.unwrapped_center -
-                            structures[idx+1].unwrapped_center)
-                    v2 = (structures[idx+2].unwrapped_center -
-                            structures[idx+1].center)
+                s2 = structures[idx+1]
+                s3 = structures[idx+2]
+                if s.parent == s2.parent == s3.parent:
+                    v1 = (s.unwrapped_center - s2.unwrapped_center)
+                    v2 = (s3.unwrapped_center - s2.unwrapped_center)
                     cos_angle = (
                         np.dot(v1, v2) /
                         (np.linalg.norm(v1)*np.linalg.norm(v2))
@@ -98,6 +93,8 @@ class System:
                     if degrees:
                         angle = np.degrees(angle)
                     angles.append(angle)
+                else:
+                    pass
             except IndexError:
                 pass
         return angles
