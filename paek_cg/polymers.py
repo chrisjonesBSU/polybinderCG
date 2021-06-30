@@ -28,8 +28,8 @@ class System:
         self.frame = frame
         with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
             self.snap = f[frame]
-
-    def coarse_grain(self,
+    
+    def coarse_grain_snap(self,
             use_monomers=False,
             use_segments=False,
             use_components=False
@@ -46,8 +46,18 @@ class System:
         if use_monomers:
             structures = [i for i in self.monomers]
         elif use_segments:
+            if len(self.molecules[0].segments) == 0:
+                raise ValueError("Segments have not been created. "
+                        "See the generate_segments method in "
+                        "the Molecule class."
+                        )
             structures = [i for i in self.segments]
         else:
+            if len(self.molecules[0].components) == 0:
+                raise ValueError("Components have not been generated. "
+                        "See the generate_components method in "
+                        "the Monomer class. "
+                        )
             structures = [i for i in self.components]
         return write_snapshot(structures)
 
