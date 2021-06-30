@@ -1,5 +1,7 @@
 from cmeutils import gsd_utils
 from cmeutils.gsd_utils import snap_molecule_cluster
+import gsd
+import gsd.hoomd
 from paek_cg.plotting import plot_distribution
 import freud
 import matplotlib.pyplot as plt
@@ -13,8 +15,10 @@ class System:
             gsd_file=None,
             snap=None,
             gsd_frame=-1):
+        self.gsd_file = gsd_file
         self.atoms_per_monomer = atoms_per_monomer
-        self.snap = gsd_utils._validate_inputs(gsd_file, snap, gsd_frame)
+        self.update_frame(gsd_frame)
+        #self.snap = gsd_utils._validate_inputs(gsd_file, snap, gsd_frame)
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
@@ -22,6 +26,11 @@ class System:
         self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
         self.box = self.snap.configuration.box 
+
+    def update_frame(self, frame):
+        self.frame = frame
+        with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
+            self.snap = f[frame]
 
     def monomers(self):
         """Generate all of the monomers from each molecule
@@ -61,8 +70,8 @@ class System:
             for component in monomer.components:
                 yield component
 
-    def end_to_end_avg(self, squared=True):
-        """Returns the end-to-end distance averaged over each
+    def end_to_end_distances(self, squared=True):
+        """Returns the end-to-end distances of each 
         molecule in the system.
 
         Parameters:
@@ -73,34 +82,20 @@ class System:
 
         Returns:
         --------
-        numpy.ndarray, shape=(1,), dtype=float
+        numpy.ndarray, shape=(1,self.n_molecules), dtype=float
             The average end-to-end distance averaged over all of the
             molecules in System.molecules
 
         """
         distances = [mol.end_to_end_distance(squared) for mol in self.molecules]
-        return np.mean(distances)
+        return distances 
 
-    def radius_of_gyration_avg(self):
+    def radii_of_gyration(self, squared=True):
         """
         """
         pass
 
-    def persistence_length_avg(self):
-        """
-        """
-        pass
-
-    def end_to_end_distribution(self, squared=False, plot=False):
-        """
-        """
-        distances = [mol.end_to_end_distance(squared) for mol in self.molecules]
-        
-        if plot:
-            plot_distribution(lengths, label="$R_E$", fit_line=True)
-        return lengths
-
-    def radius_of_gyration_distribution(self):
+    def persistence_lengths(self):
         """
         """
         pass
