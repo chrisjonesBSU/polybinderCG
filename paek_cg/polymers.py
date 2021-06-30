@@ -22,7 +22,6 @@ class System:
         self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
         self.box = self.snap.configuration.box 
-        assert len(self.molecules) == self.n_molecules
 
     def monomers(self):
         """Generate all of the monomers from each molecule
@@ -150,7 +149,6 @@ class System:
             )
         )
         return bond_angles
-
 
 class Structure:
     """Base class for the Molecule(), Segment(), and Monomer() classes.
@@ -371,6 +369,8 @@ class Molecule(Structure):
             Set to True to return bond vectors between the Molecule's monomers.
         use_segments : bool, optional, default=False
             Set to True to return bond vectors between the Molecule's segments.
+        use_components : bool, optional, default=False
+            Set to True to return bond vectors between the Molecule's components.
         normalize : bool, optional, default=False
             Set to True to normalize each vector by its magnitude.
 
@@ -386,23 +386,15 @@ class Molecule(Structure):
                 )
 
         vectors = []
-        for idx, structure in enumerate(sub_structures):
+        for idx, s in enumerate(sub_structures):
             try:
-                next_structure = sub_structures[idx+1]
+                s2 = sub_structures[idx+1]
                 if pair:
-                    if sorted(pair) == sorted(
-                            [
-                                structure.name,
-                                next_structure.name
-                            ]
-                            ):
+                    if sorted(pair) == sorted([s.name, s2.name]):
                         pass
                     else:
                         continue
-                vector = (
-                        next_structure.unwrapped_center -
-                        structure.unwrapped_center
-                        )
+                vector = (s2.unwrapped_center - s.unwrapped_center)
                 if normalize:
                     vector /= np.linalg.norm(vector)
                 vectors.append(vector)
@@ -448,28 +440,19 @@ class Molecule(Structure):
                 )
 
         angles = []
-        for idx, structure in enumerate(sub_structures):
+        for idx, s in enumerate(sub_structures):
             try:
+                s2 = sub_structures[idx+1]
+                s3 = sub_structures[idx+2]
                 if group is not None:
-                    if group == [
-                            structure.name,
-                            sub_structures[idx+1].name,
-                            sub_structures[idx+2].name
-                        ]:
+                    if group == [s.name, s2.name,s3.name]:
                         pass
                     else:
                         continue
-                vector = (
-                        structure.unwrapped_center - 
-                        sub_structures[idx+1].unwrapped_center
-                        )
-                next_vector = (
-                        sub_structures[idx+2].unwrapped_center - 
-                        sub_structures[idx+1].unwrapped_center
-                        )
+                v1 = (s.unwrapped_center - s2.unwrapped_center)
+                v2 = (s3.unwrapped_center - s2.unwrapped_center)
                 cos_angle = (
-                        np.dot(vector, next_vector) /
-                        (np.linalg.norm(vector) * np.linalg.norm(next_vector))
+                        np.dot(v1,v2) / (np.linalg.norm(v1)*np.linalg.norm(v2))
                         )
                 angles.append(np.arccos(cos_angle))
             except IndexError:
