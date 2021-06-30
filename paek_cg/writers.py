@@ -4,7 +4,7 @@ import freud
 import numpy as np
 import re
 
-def write_snapshot(beads, rewrap):
+def write_snapshot(beads, rewrap=True, box_expand=None):
     """
     beads : iterable, required
         An iterable of any of the structure classes in polymer.py
@@ -51,7 +51,7 @@ def write_snapshot(beads, rewrap):
         w_positions = fbox.wrap(all_pos)
         w_images = fbox.get_images(all_pos)
     else:
-        box *= 50 
+        box *= box_expand 
         w_positions = all_pos
         w_images = np.array([[0,0,0] for i in all_pos])
 
