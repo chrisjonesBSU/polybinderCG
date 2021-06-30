@@ -15,7 +15,7 @@ class System:
             gsd_frame=-1):
         self.gsd_file = gsd_file
         self.atoms_per_monomer = atoms_per_monomer
-        self.update_frame(gsd_frame)
+        self.update_frame(gsd_frame) # Sets self.frame and self.snap
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
@@ -480,12 +480,13 @@ class Molecule(Structure):
     def _sub_structures(self, monomers, segments, components):
         """
         """
-        if all((monomers, segments, components)):
+        args = [monomers, segments, components]
+        if args.count(True) > 1:
             raise ValueError(
                     "Only one of `monomers`, `segments`, and `components` "
                     "can be set to `True`"
                     )
-        if not any((monomers, segments, components)):
+        if not any(args):
             raise ValueError(
                     "Set one of `monomers`, `segments`, `components` to "
                     "`True` depending on which structure bond vectors "
