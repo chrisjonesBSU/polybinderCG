@@ -551,30 +551,6 @@ class Segment(Structure):
         assert len(self.monomers) ==  int(
                 self.n_atoms / self.system.atoms_per_monomer
                 )
-     
-    def bond_vectors(self):
-        """Generates a list of the vectors connecting subsequent monomer units.
-        Uses the monomer's average center coordinates.
-
-        Returns:
-        --------
-        list of numpy.ndarray, shape=(3,), dtype=float
-
-        """
-        b_vectors = []
-        for idx, monomer in enumerate(self.monomers):
-            try:
-                next_monomer = self.monomers[idx+1]
-                vector = (
-                        next_monomer.unwrapped_center -
-                        monomer.unwrapped_center
-                        )
-                b_vectors.append(vector)
-            except IndexError:
-                pass
-
-        assert len(b_vectors) == len(self.monomers) - 1
-        return b_vectors
 
 
 class Component(Structure):
