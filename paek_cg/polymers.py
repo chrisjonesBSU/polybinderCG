@@ -1,10 +1,8 @@
-from cmeutils import gsd_utils
 from cmeutils.gsd_utils import snap_molecule_cluster
+from paek_cg.writers import write_snapshot
 import gsd
 import gsd.hoomd
-from paek_cg.plotting import plot_distribution
 import freud
-import matplotlib.pyplot as plt
 import numpy as np
 
 class System:
@@ -18,7 +16,6 @@ class System:
         self.gsd_file = gsd_file
         self.atoms_per_monomer = atoms_per_monomer
         self.update_frame(gsd_frame)
-        #self.snap = gsd_utils._validate_inputs(gsd_file, snap, gsd_frame)
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
@@ -31,6 +28,28 @@ class System:
         self.frame = frame
         with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
             self.snap = f[frame]
+
+    def coarse_grain(self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False
+            ):
+        args = [use_monomers, use_segments, use_components]
+        if args.count(True) > 1:
+            raise ValueError("You can only choose one of monomers, "
+                    "segments or components."
+                    )
+        if not any(args):
+            raise ValueError("Select one of monomers, segments, "
+                    "or components as the coarse-grained beads."
+                    )
+        if use_monomers:
+            structures = [i for i in self.monomers]
+        elif use_segments:
+            structures = [i for i in self.segments]
+        else:
+            structures = [i for i in self.components]
+        return write_snapshot(structures)
 
     def monomers(self):
         """Generate all of the monomers from each molecule
@@ -130,7 +149,6 @@ class System:
             use_segments=False,
             use_components=False,
             group=None,
-            plot=False
             ):
         """
         """
