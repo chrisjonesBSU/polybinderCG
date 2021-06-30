@@ -28,7 +28,7 @@ class System:
         self.frame = frame
         with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
             self.snap = f[frame]
-            self.n_frames = f.n_frames
+            self.n_frames = len(f) 
 
     def coarse_grain_trajectory(self,
             file_path,
@@ -38,11 +38,11 @@ class System:
             first_frame = 0,
             last_frame = -1
             ):
-            current_frame = self.frame
-            if first_frame < 0:
-                first_frame = self.n_frames + first_frame
-            if last_frame < 0:
-                last_frame = self.n_frames + last_frame
+        current_frame = self.frame
+        if first_frame < 0:
+            first_frame = self.n_frames + first_frame
+        if last_frame < 0:
+            last_frame = self.n_frames + last_frame
         with gsd.hoomd.open(file_path, mode="wb") as f:
             for i in range(first_frame, last_frame):
                 self.update_frame(frame=i)
