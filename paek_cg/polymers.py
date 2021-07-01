@@ -76,7 +76,7 @@ class System:
                         "See the generate_segments method in "
                         "the Molecule class."
                         )
-            structures = [i for i in self.segments]
+            structures = [i for i in self.segments()]
         else:
             if len(self.molecules[0].components) == 0:
                 raise ValueError("Components have not been generated. "
