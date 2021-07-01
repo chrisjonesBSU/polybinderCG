@@ -69,7 +69,7 @@ class System:
                     "or components as the coarse-grained beads."
                     )
         if use_monomers:
-            structures = [i for i in self.monomers]
+            structures = [i for i in self.monomers()]
         elif use_segments:
             if len(self.molecules[0].segments) == 0:
                 raise ValueError("Segments have not been created. "
@@ -83,7 +83,7 @@ class System:
                         "See the generate_components method in "
                         "the Monomer class. "
                         )
-            structures = [i for i in self.components]
+            structures = [i for i in self.components()]
         return write_snapshot(structures)
 
     def monomers(self):
