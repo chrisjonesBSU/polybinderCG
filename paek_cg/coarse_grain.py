@@ -9,26 +9,27 @@ class System:
     """
     """
     def __init__(self,
+            gsd_file,
             atoms_per_monomer,
-            gsd_file=None,
-            snap=None,
             gsd_frame=-1):
         self.gsd_file = gsd_file
         self.atoms_per_monomer = atoms_per_monomer
-        self.update_frame(gsd_frame) # Sets self.frame and self.snap
+        self.update_frame(gsd_frame) # Sets self.frame, self.snap, self.box
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
         self.n_atoms = len(self.clusters)
         self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
-        self.box = self.snap.configuration.box 
 
     def update_frame(self, frame):
+        """
+        """
         self.frame = frame
         with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
             self.snap = f[frame]
-            self.n_frames = len(f) 
+            self.box = self.snap.configuration.box
+            self.n_frames = len(f)
 
     def coarse_grain_trajectory(self,
             file_path,
@@ -38,20 +39,25 @@ class System:
             first_frame = 0,
             last_frame = -1
             ):
+        """
+        """
         current_frame = self.frame
         if first_frame < 0:
             first_frame = self.n_frames + first_frame
         if last_frame < 0:
             last_frame = self.n_frames + last_frame
         with gsd.hoomd.open(file_path, mode="wb") as f:
-            for i in range(first_frame, last_frame):
-                self.update_frame(frame=i)
-                snap = self.coarse_grain_snap(
-                        use_monomers=use_monomers,
-                        use_segments=use_segments,
-                        use_components=use_components
-                        )
-                f.append(snap)
+            for i in range(first_frame, last_frame + 1):
+                try:
+                    self.update_frame(frame=i)
+                    snap = self.coarse_grain_snap(
+                            use_monomers=use_monomers,
+                            use_segments=use_segments,
+                            use_components=use_components
+                            )
+                    f.append(snap)
+                except IndexError:
+                    pass
         self.update_frame(frame=current_frame)
 
     def coarse_grain_snap(self,
@@ -361,6 +367,13 @@ class Molecule(Structure):
             each segment.
 
         """
+        if self.n_monomers % monomers_per_segment != 0.0:
+            raise ValueError(
+            "The number of monomers in the molecule and monomers_per_segment "
+            "should be evenly divisible. "
+            f"This molecule has {self.n_monomers} monomers, "
+            f"you entered {monomers_per_segment} monomers_per_segment."
+        )
         segments_per_molecule = int(self.n_monomers / monomers_per_segment)
         segment_indices = np.array_split(
                 self.atom_indices,
@@ -611,4 +624,7 @@ class Component(Structure):
                 name=name
                 )
         self.monomer = monomer
-        
+        self.x_orientation = None
+        self.y_orientation = None
+        self.z_orientation = None
+
