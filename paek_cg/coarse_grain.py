@@ -22,12 +22,12 @@ class System:
         self.n_atoms = len(self.clusters)
         self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
-        self.box = self.snap.configuration.box 
 
     def update_frame(self, frame):
         self.frame = frame
         with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
             self.snap = f[frame]
+            self.box = self.snap.configuration.box
             self.n_frames = len(f) 
 
     def coarse_grain_trajectory(self,
@@ -42,7 +42,7 @@ class System:
         if first_frame < 0:
             first_frame = self.n_frames + first_frame
         if last_frame < 0:
-            last_frame = self.n_frames + last_frame
+            last_frame = self.n_frames + last_frame + 1
         with gsd.hoomd.open(file_path, mode="wb") as f:
             for i in range(first_frame, last_frame):
                 self.update_frame(frame=i)
