@@ -262,6 +262,11 @@ class Structure:
 
         """
         return self.system.snap.particles.position[self.atom_indices]
+    
+    @property
+    def mass(self):
+        """The mass of the structure"""
+        return sum(self.system.snap.particles.mass[self.atom_indices])
 
     @property
     def center(self):
