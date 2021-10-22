@@ -17,11 +17,14 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     all_angles = []
     angle_groups = []
     all_pos = []
+    masses = []
     box = beads[0].system.box 
 
     for idx, bead in enumerate(beads):
         all_types.append(bead.name)
         all_pos.append(bead.unwrapped_center)
+        masses.append(bead.mass)
+
         try:
             if bead.parent == beads[idx+1].parent:
                 pair = sorted([bead.name, beads[idx+1].name])
@@ -61,6 +64,7 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     s.particles.types = types 
     s.particles.typeid = np.array(type_ids) 
     s.particles.position = w_positions 
+    s.particles.mass = masses
     s.particles.image = w_images
     #Bonds
     s.bonds.N = len(all_pairs)
