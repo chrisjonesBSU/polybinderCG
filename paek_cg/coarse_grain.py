@@ -8,11 +8,9 @@ import numpy as np
 class System:
     """
     """
-    def __init__(self,
-            atoms_per_monomer,
-            gsd_file=None,
-            snap=None,
-            gsd_frame=-1):
+    def __init__(
+            self, atoms_per_monomer, gsd_file=None, gsd_frame=-1
+        ):
         self.gsd_file = gsd_file
         self.atoms_per_monomer = atoms_per_monomer
         self.update_frame(gsd_frame) # Sets self.frame and self.snap
@@ -30,14 +28,15 @@ class System:
             self.box = self.snap.configuration.box
             self.n_frames = len(f) 
 
-    def coarse_grain_trajectory(self,
+    def coarse_grain_trajectory(
+            self,
             file_path,
             use_monomers=False,
             use_segments=False,
             use_components=False,
             first_frame = 0,
             last_frame = -1
-            ):
+        ):
         current_frame = self.frame
         if first_frame < 0:
             first_frame = self.n_frames + first_frame
@@ -55,10 +54,8 @@ class System:
         self.update_frame(frame=current_frame)
 
     def coarse_grain_snap(self,
-            use_monomers=False,
-            use_segments=False,
-            use_components=False
-            ):
+            use_monomers=False, use_segments=False,use_components=False
+        ):
         args = [use_monomers, use_segments, use_components]
         if args.count(True) > 1:
             raise ValueError("You can only choose one of monomers, "
@@ -161,7 +158,7 @@ class System:
             use_segments=False,
             use_components=False,
             pair=None,
-            ):
+        ):
         """
         """
         bond_lengths = []
@@ -184,7 +181,7 @@ class System:
             use_segments=False,
             use_components=False,
             group=None,
-            ):
+        ):
         """
         """
         bond_angles = []
@@ -226,13 +223,14 @@ class Structure:
         The x, y, z coordinates of the structure's center of mass.
 
     """
-    def __init__(self,
+    def __init__(
+            self,
             system,
             atom_indices=None,
             name=None,
             parent=None,
             molecule_id=None
-            ):
+        ):
         self.system = system
         self.name = name
         self.parent = parent
@@ -328,11 +326,12 @@ class Molecule(Structure):
         self.components = []
         self.sequence = None
 
-    def assign_types(self,
+    def assign_types(
+            self,
             use_monomers=True,
             use_segments=False,
             use_components=False
-            ):
+        ):
         """
         """
         if self.sequence is None:
@@ -348,6 +347,23 @@ class Molecule(Structure):
                 - len(monomer_sequence))]
             for i, name in enumerate(list(monomer_sequence)):
                 self.monomers[i].name = name
+
+        elif use_segments:
+            n = len(self.segments) // len(self.sequence)
+            segment_sequence = self.sequence * n
+            segment_sequence += self.sequence[:(len(self.segments) - 
+                len(segment_sequence))]
+            for i, name in enumerate(list(segment_sequence)):
+                self.segments[i].name = name
+
+        elif use_components:
+            n = len(self.components) // len(self.sequence)
+            comp_sequence = self.sequence * n
+            comp_sequence += self.sequence[:(len(self.components) - 
+                len(comp_sequence))]
+            for i, name in enumerate(list(comp_sequence)):
+                self.components[i].name = name
+
 
 
     def generate_segments(self, monomers_per_segment):
