@@ -14,12 +14,13 @@ class System:
         self.gsd_file = gsd_file
         self.atoms_per_monomer = atoms_per_monomer
         self.update_frame(gsd_frame) # Sets self.frame and self.snap
+        self.contains_H = self.check_for_Hs()
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
         self.n_atoms = len(self.clusters)
-        self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
-        #self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
+        #self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
+        self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
 
     def update_frame(self, frame):
         self.frame = frame
@@ -195,6 +196,14 @@ class System:
         )
         return bond_angles
 
+    def _check_for_Hs(self):
+        hydrogen_types = ["ha", "h", "ho", "h4"]
+        with gsd.hoomd.open(self.snap) as snap:
+            if any([h in list(snap.particles.types) for h in hydrogen_types]):
+                return True
+            else:
+                return False
+
 class Structure:
     """Base class for the Molecule(), Segment(), and Monomer() classes.
 
@@ -250,11 +259,21 @@ class Structure:
             assert len(monomer_indices) == structure_length
             return [Monomer(self, i) for i in monomer_indices]
         elif self.system.contains_H == True:
-            structure_length = int(self.n_atoms / self.system.atoms_per_monomer) - 2
-            head_indices = (range(0, self.system.atoms_per_monomer))
-            tail_indices = 
-        assert len(monomer_indices) == structure_length
-        return [Monomer(self, i) for i in monomer_indices]
+            head_indices = np.array(range(0, self.system.atoms_per_monomer - 1))
+            tail_indices =  np.flip(-head_indices - 1)
+            structure_length = int((self.n_atoms-(len(head_indices)*2)) 
+                    / (self.system.atoms_per_monomer - 2)
+                )
+            monomer_indices = np.array_split(
+                    self.atom_indices[head_indices[-1]+1:tail_indices[0]],
+                    structure_length
+                )
+            assert len(monomer_indices) == structure_length
+
+            monomers = [Monomer(self, head_indices)]
+            monomers.extend([Monomer(self, i) for i in monomer_indices])
+            monomers.append(Monomer(self, tail_indices))
+            return monomers 
 
     @property
     def atom_positions(self):
