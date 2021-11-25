@@ -19,7 +19,7 @@ class System:
         self.n_molecules = len(self.molecule_ids)
         self.n_atoms = len(self.clusters)
         self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
-        self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
+        #self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
 
     def update_frame(self, frame):
         self.frame = frame
@@ -244,8 +244,15 @@ class Structure:
     def generate_monomers(self):
         if isinstance(self, Monomer):
             return self
-        structure_length = int(self.n_atoms / self.system.atoms_per_monomer)
-        monomer_indices = np.array_split(self.atom_indices, structure_length)
+        if self.system.contains_H == False:
+            structure_length = int(self.n_atoms / self.system.atoms_per_monomer)
+            monomer_indices = np.array_split(self.atom_indices, structure_length)
+            assert len(monomer_indices) == structure_length
+            return [Monomer(self, i) for i in monomer_indices]
+        elif self.system.contains_H == True:
+            structure_length = int(self.n_atoms / self.system.atoms_per_monomer) - 2
+            head_indices = (range(0, self.system.atoms_per_monomer))
+            tail_indices = 
         assert len(monomer_indices) == structure_length
         return [Monomer(self, i) for i in monomer_indices]
 
