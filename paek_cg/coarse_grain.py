@@ -14,7 +14,8 @@ class System:
         self.gsd_file = gsd_file
         self.atoms_per_monomer = atoms_per_monomer
         self.update_frame(gsd_frame) # Sets self.frame and self.snap
-        self.contains_H = self.check_for_Hs()
+        self.contains_H = self._check_for_Hs()
+        print(self.contains_H)
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
@@ -198,11 +199,10 @@ class System:
 
     def _check_for_Hs(self):
         hydrogen_types = ["ha", "h", "ho", "h4"]
-        with gsd.hoomd.open(self.snap) as snap:
-            if any([h in list(snap.particles.types) for h in hydrogen_types]):
-                return True
-            else:
-                return False
+        if any([h in list(self.snap.particles.types) for h in hydrogen_types]):
+            return True
+        else:
+            return False
 
 class Structure:
     """Base class for the Molecule(), Segment(), and Monomer() classes.
@@ -606,7 +606,7 @@ class Monomer(Structure):
                 atom_indices=atom_indices
                 )
         self.components = [] 
-        assert self.n_atoms == self.system.atoms_per_monomer 
+        #assert self.n_atoms == self.system.atoms_per_monomer 
         
     def generate_components(self, index_mapping):
         """
