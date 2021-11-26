@@ -37,6 +37,15 @@ class System:
             first_frame = 0,
             last_frame = -1
         ):
+        args = [use_monomers, use_segments, use_components]
+        if args.count(True) > 1:
+            raise ValueError("You can only choose one of monomers, "
+                    "segments or components."
+                    )
+        if not any(args):
+            raise ValueError("Select one of monomers, segments, "
+                    "or components as the coarse-grained beads."
+                    )
         current_frame = self.frame
         if first_frame < 0:
             first_frame = self.n_frames + first_frame
@@ -56,15 +65,6 @@ class System:
     def coarse_grain_snap(self,
             use_monomers=False, use_segments=False,use_components=False
         ):
-        args = [use_monomers, use_segments, use_components]
-        if args.count(True) > 1:
-            raise ValueError("You can only choose one of monomers, "
-                    "segments or components."
-                    )
-        if not any(args):
-            raise ValueError("Select one of monomers, segments, "
-                    "or components as the coarse-grained beads."
-                    )
         if use_monomers:
             structures = [i for i in self.monomers()]
         elif use_segments:
@@ -74,7 +74,7 @@ class System:
                         "the Molecule class."
                         )
             structures = [i for i in self.segments()]
-        else:
+        elif use_components:
             if len(self.molecules[0].components) == 0:
                 raise ValueError("Components have not been generated. "
                         "See the generate_components method in "
