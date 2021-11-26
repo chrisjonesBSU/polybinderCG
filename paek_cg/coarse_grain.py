@@ -15,12 +15,10 @@ class System:
         self.atoms_per_monomer = atoms_per_monomer
         self.update_frame(gsd_frame) # Sets self.frame and self.snap
         self.contains_H = self._check_for_Hs()
-        print(self.contains_H)
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
         self.n_atoms = len(self.clusters)
-        #self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
 
     def update_frame(self, frame):
@@ -259,13 +257,15 @@ class Structure:
             assert len(monomer_indices) == structure_length
             return [Monomer(self, i) for i in monomer_indices]
         elif self.system.contains_H == True:
-            head_indices = np.array(range(0, self.system.atoms_per_monomer - 1))
-            tail_indices =  np.flip(-head_indices - 1)
-            structure_length = int((self.n_atoms-(len(head_indices)*2)) 
+            _head_indices = np.array(range(0, self.system.atoms_per_monomer - 1))
+            head_indices = self.atom_indices[_head_indices]
+            _tail_indices = np.flip(-_head_indices - 1)
+            tail_indices =  self.atom_indices[_tail_indices]
+            structure_length = int((self.n_atoms-(len(_head_indices)*2)) 
                     / (self.system.atoms_per_monomer - 2)
                 )
             monomer_indices = np.array_split(
-                    self.atom_indices[head_indices[-1]+1:tail_indices[0]],
+                    self.atom_indices[_head_indices[-1]+1:_tail_indices[0]],
                     structure_length
                 )
             assert len(monomer_indices) == structure_length
@@ -389,8 +389,6 @@ class Molecule(Structure):
                 len(comp_sequence))]
             for i, name in enumerate(list(comp_sequence)):
                 self.components[i].name = name
-
-
 
     def generate_segments(self, monomers_per_segment):
         """
@@ -606,7 +604,6 @@ class Monomer(Structure):
                 atom_indices=atom_indices
                 )
         self.components = [] 
-        #assert self.n_atoms == self.system.atoms_per_monomer 
         
     def generate_components(self, index_mapping):
         """
