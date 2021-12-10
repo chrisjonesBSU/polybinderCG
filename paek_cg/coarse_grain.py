@@ -3,18 +3,38 @@ from paek_cg.writers import write_snapshot
 import gsd
 import gsd.hoomd
 import freud
+import json
 import numpy as np
+from paek_cg.compounds import COMPOUND_DIR
 
 class System:
     """
     """
     def __init__(
-            self, atoms_per_monomer, gsd_file=None, gsd_frame=-1
+            self,
+            compound=None,
+            atoms_per_monomer=None,
+            gsd_file=None,
+            gsd_frame=-1
         ):
         self.gsd_file = gsd_file
-        self.atoms_per_monomer = atoms_per_monomer
-        self.update_frame(gsd_frame) # Sets self.frame and self.snap
         self.contains_H = self._check_for_Hs()
+        self.compound = compound
+        if self.compound != None:
+            f = open(f"{COMPOUND_DIR}/{self.compound}.json")
+            self.comp_dict = json.load(f) 
+            f.close()
+            if self.contains_H:
+                self.atoms_per_monomer = self.comp_dict[
+                        "atoms_per_monomer_AA"
+                        ]
+            elif not self.contains_H:
+                self.atoms_per_monomer = self.comp_dict[
+                        "atoms_per_monomer_UA"
+                        ]
+        elif self.compound == None:
+            self.atoms_per_monomer = atoms_per_monomer
+        self.update_frame(gsd_frame) # Sets self.frame and self.snap
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
