@@ -8,6 +8,8 @@ dependencies:
   - matplotlib
   - numpy
   - pip
-  - python=3.7
+  - python=3.9
   - pytest
   - pytest-cov
+  - pip:
+      - git+https://github.com/cmelab/cmeutils.git@master

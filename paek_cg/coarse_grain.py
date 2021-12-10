@@ -630,6 +630,17 @@ class Monomer(Structure):
         """
         if self.components:
             raise ValueError("Components have already been generated")
+        if isinstance(index_mapping, str):
+            index_mapping = self.comp_dict[index_mapping]
+        elif isinstance(index_mapping, dict):
+            pass
+        else:
+            raise ValueError("Index mapping should be a dictionary of "
+                   "bead_name: bead_indices."
+                   "Or,` a label for one of the component mappings defined "
+                   "in a compound JSON file."
+                )
+
         components = []
         for name, indices in index_mapping.items():
             if all([isinstance(i, list) for i in indices]):
