@@ -8,19 +8,17 @@ import numpy as np
 class System:
     """
     """
-    def __init__(self,
-            atoms_per_monomer,
-            gsd_file=None,
-            snap=None,
-            gsd_frame=-1):
+    def __init__(
+            self, atoms_per_monomer, gsd_file=None, gsd_frame=-1
+        ):
         self.gsd_file = gsd_file
         self.atoms_per_monomer = atoms_per_monomer
         self.update_frame(gsd_frame) # Sets self.frame and self.snap
+        self.contains_H = self._check_for_Hs()
         self.clusters = snap_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
         self.n_atoms = len(self.clusters)
-        self.n_monomers = int(self.n_atoms / self.atoms_per_monomer)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
 
     def update_frame(self, frame):
@@ -30,14 +28,24 @@ class System:
             self.box = self.snap.configuration.box
             self.n_frames = len(f) 
 
-    def coarse_grain_trajectory(self,
+    def coarse_grain_trajectory(
+            self,
             file_path,
             use_monomers=False,
             use_segments=False,
             use_components=False,
             first_frame = 0,
             last_frame = -1
-            ):
+        ):
+        args = [use_monomers, use_segments, use_components]
+        if args.count(True) > 1:
+            raise ValueError("You can only choose one of monomers, "
+                    "segments or components."
+                    )
+        if not any(args):
+            raise ValueError("Select one of monomers, segments, "
+                    "or components as the coarse-grained beads."
+                    )
         current_frame = self.frame
         if first_frame < 0:
             first_frame = self.n_frames + first_frame
@@ -55,19 +63,8 @@ class System:
         self.update_frame(frame=current_frame)
 
     def coarse_grain_snap(self,
-            use_monomers=False,
-            use_segments=False,
-            use_components=False
-            ):
-        args = [use_monomers, use_segments, use_components]
-        if args.count(True) > 1:
-            raise ValueError("You can only choose one of monomers, "
-                    "segments or components."
-                    )
-        if not any(args):
-            raise ValueError("Select one of monomers, segments, "
-                    "or components as the coarse-grained beads."
-                    )
+            use_monomers=False, use_segments=False,use_components=False
+        ):
         if use_monomers:
             structures = [i for i in self.monomers()]
         elif use_segments:
@@ -77,7 +74,7 @@ class System:
                         "the Molecule class."
                         )
             structures = [i for i in self.segments()]
-        else:
+        elif use_components:
             if len(self.molecules[0].components) == 0:
                 raise ValueError("Components have not been generated. "
                         "See the generate_components method in "
@@ -161,7 +158,7 @@ class System:
             use_segments=False,
             use_components=False,
             pair=None,
-            ):
+        ):
         """
         """
         bond_lengths = []
@@ -184,7 +181,7 @@ class System:
             use_segments=False,
             use_components=False,
             group=None,
-            ):
+        ):
         """
         """
         bond_angles = []
@@ -197,6 +194,13 @@ class System:
             )
         )
         return bond_angles
+
+    def _check_for_Hs(self):
+        hydrogen_types = ["ha", "h", "ho", "h4"]
+        if any([h in list(self.snap.particles.types) for h in hydrogen_types]):
+            return True
+        else:
+            return False
 
 class Structure:
     """Base class for the Molecule(), Segment(), and Monomer() classes.
@@ -226,13 +230,14 @@ class Structure:
         The x, y, z coordinates of the structure's center of mass.
 
     """
-    def __init__(self,
+    def __init__(
+            self,
             system,
             atom_indices=None,
             name=None,
             parent=None,
             molecule_id=None
-            ):
+        ):
         self.system = system
         self.name = name
         self.parent = parent
@@ -246,10 +251,29 @@ class Structure:
     def generate_monomers(self):
         if isinstance(self, Monomer):
             return self
-        structure_length = int(self.n_atoms / self.system.atoms_per_monomer)
-        monomer_indices = np.array_split(self.atom_indices, structure_length)
-        assert len(monomer_indices) == structure_length
-        return [Monomer(self, i) for i in monomer_indices]
+        if self.system.contains_H == False:
+            structure_length = int(self.n_atoms / self.system.atoms_per_monomer)
+            monomer_indices = np.array_split(self.atom_indices, structure_length)
+            assert len(monomer_indices) == structure_length
+            return [Monomer(self, i) for i in monomer_indices]
+        elif self.system.contains_H == True:
+            _head_indices = np.array(range(0, self.system.atoms_per_monomer - 1))
+            head_indices = self.atom_indices[_head_indices]
+            _tail_indices = np.flip(-_head_indices - 1)
+            tail_indices =  self.atom_indices[_tail_indices]
+            structure_length = int((self.n_atoms-(len(_head_indices)*2)) 
+                    / (self.system.atoms_per_monomer - 2)
+                )
+            monomer_indices = np.array_split(
+                    self.atom_indices[_head_indices[-1]+1:_tail_indices[0]],
+                    structure_length
+                )
+            assert len(monomer_indices) == structure_length
+
+            monomers = [Monomer(self, head_indices)]
+            monomers.extend([Monomer(self, i) for i in monomer_indices])
+            monomers.append(Monomer(self, tail_indices))
+            return monomers 
 
     @property
     def atom_positions(self):
@@ -328,11 +352,12 @@ class Molecule(Structure):
         self.components = []
         self.sequence = None
 
-    def assign_types(self,
+    def assign_types(
+            self,
             use_monomers=True,
             use_segments=False,
             use_components=False
-            ):
+        ):
         """
         """
         if self.sequence is None:
@@ -349,6 +374,21 @@ class Molecule(Structure):
             for i, name in enumerate(list(monomer_sequence)):
                 self.monomers[i].name = name
 
+        elif use_segments:
+            n = len(self.segments) // len(self.sequence)
+            segment_sequence = self.sequence * n
+            segment_sequence += self.sequence[:(len(self.segments) - 
+                len(segment_sequence))]
+            for i, name in enumerate(list(segment_sequence)):
+                self.segments[i].name = name
+
+        elif use_components:
+            n = len(self.components) // len(self.sequence)
+            comp_sequence = self.sequence * n
+            comp_sequence += self.sequence[:(len(self.components) - 
+                len(comp_sequence))]
+            for i, name in enumerate(list(comp_sequence)):
+                self.components[i].name = name
 
     def generate_segments(self, monomers_per_segment):
         """
@@ -564,7 +604,6 @@ class Monomer(Structure):
                 atom_indices=atom_indices
                 )
         self.components = [] 
-        assert self.n_atoms == self.system.atoms_per_monomer 
         
     def generate_components(self, index_mapping):
         """
