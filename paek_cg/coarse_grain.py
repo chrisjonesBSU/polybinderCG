@@ -1,4 +1,4 @@
-from cmeutils.gsd_utils import snap_molecule_cluster
+from cmeutils.gsd_utils import get_molecule_cluster
 from paek_cg.writers import write_snapshot
 import gsd
 import gsd.hoomd
@@ -18,6 +18,7 @@ class System:
             gsd_frame=-1
         ):
         self.gsd_file = gsd_file
+        self.update_frame(gsd_frame) # Sets self.frame and self.snap
         self.contains_H = self._check_for_Hs()
         self.compound = compound
         if self.compound != None:
@@ -34,8 +35,7 @@ class System:
                         ]
         elif self.compound == None:
             self.atoms_per_monomer = atoms_per_monomer
-        self.update_frame(gsd_frame) # Sets self.frame and self.snap
-        self.clusters = snap_molecule_cluster(snap=self.snap)
+        self.clusters = get_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
         self.n_atoms = len(self.clusters)
@@ -631,7 +631,8 @@ class Monomer(Structure):
         if self.components:
             raise ValueError("Components have already been generated")
         if isinstance(index_mapping, str):
-            index_mapping = self.comp_dict[index_mapping]
+            index_mapping = self.system.comp_dict[
+                    "component_mappings"][0][index_mapping]
         elif isinstance(index_mapping, dict):
             pass
         else:
