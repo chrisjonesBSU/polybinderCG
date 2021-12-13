@@ -18,11 +18,16 @@ class System:
             gsd_frame=-1
         ):
         self.gsd_file = gsd_file
-        self.update_frame(gsd_frame) # Sets self.frame and self.snap
+        self.update_frame(gsd_frame) # Sets self.frame, self.snap, self.box
         self.contains_H = self._check_for_Hs()
         self.compound = compound
         if self.compound != None:
-            f = open(f"{COMPOUND_DIR}/{self.compound}.json")
+            try:
+                f = open(f"{COMPOUND_DIR}/{self.compound}.json")
+            except FileNotFoundError:
+                raise ValueError(
+                    f"No file was found in {COMPOUND_DIR} for {self.compound}"
+                )
             self.comp_dict = json.load(f) 
             f.close()
             if self.contains_H:
@@ -35,6 +40,7 @@ class System:
                         ]
         elif self.compound == None:
             self.atoms_per_monomer = atoms_per_monomer
+
         self.clusters = get_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
@@ -558,7 +564,7 @@ class Molecule(Structure):
                 s2 = sub_structures[idx+1]
                 s3 = sub_structures[idx+2]
                 if group is not None:
-                    if group == [s.name, s2.name,s3.name]:
+                    if group == [s.name, s2.name, s3.name]:
                         pass
                     else:
                         continue
