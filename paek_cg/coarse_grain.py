@@ -115,7 +115,7 @@ class System:
 
         Yields:
         -------
-        polymers.Monomer
+        Monomer
      
         """
         for molecule in self.molecules:
@@ -128,7 +128,7 @@ class System:
 
         Yields:
         -------
-        polymers.Segment
+        Segment
 
         """
         for molecule in self.molecules:
@@ -140,7 +140,7 @@ class System:
 
         Yields:
         -------
-        polymers.Component
+        Component
 
         """
         for monomer in self.monomers():
@@ -222,6 +222,7 @@ class System:
         return bond_angles
 
     def _check_for_Hs(self):
+        """Returns True if the gsd snapshot contains hydrogen type atoms"""
         hydrogen_types = ["ha", "h", "ho", "h4"]
         if any([h in list(self.snap.particles.types) for h in hydrogen_types]):
             return True
@@ -233,7 +234,7 @@ class Structure:
 
     Parameters:
     -----------
-    system : 'cmeutils.polymers.System', required
+    system : 'System()', required
         The system object initially created from the input .gsd file.
     atom_indices : np.ndarray(n, 3), optional, default=None
         The atom indices in the system that belong to this specific structure.
@@ -365,7 +366,38 @@ class Structure:
         return np.array([x_mean, y_mean, z_mean])
 
 class Molecule(Structure):
-    """
+    """The Structure object containing information about the entire molecule.
+
+    Parameters:
+    -----------
+    system : 'System()', required
+        The system object initially created from the input .gsd file.
+    molecule_id : int, optional, default=None
+        The ID number of the specific molecule from system.molecule_ids.
+
+    Attributes:
+    -----------
+    system : 'System()'
+        The system that this structure belong to. Contains needed information
+        about the box, and gsd snapshot which are used elsewhere.
+    monomers : List of Monomer() objects.
+        List of Monomer objects contained only within this molecule.
+    segments : List of Segment() objects.
+        List of Segment objects contained only within this molecule.
+    components : List of Component() objects.
+        List of Component objects contained only within this molecule.
+    sequence : str
+        The monomer type sequence specific to this molecule.
+
+    Methods:
+    --------
+    assign_types : Assigns the type names to each child monomer bead
+        Requires that the Molecule.sequence attribute is defined before hand.
+    generate_segments : Creates Structure() objects for child segments.
+
+
+
+
     """
     def __init__(self, system, molecule_id):
         super(Molecule, self).__init__(
@@ -384,7 +416,16 @@ class Molecule(Structure):
             use_segments=False,
             use_components=False
         ):
-        """
+        """Assigns the type names to each child monomer bead.
+        Requires that self.sequence attribute is defined behond hand.
+        If assigning types for segments or components, they must
+        be generated first.
+        
+        Parameters:
+        -----------
+        use_monomers, use_segments, use_components : boolean
+            Specifies the type of substructure to assign types to.
+
         """
         if self.sequence is None:
             raise ValueError(
@@ -417,8 +458,7 @@ class Molecule(Structure):
                 self.components[i].name = name
 
     def generate_segments(self, monomers_per_segment):
-        """
-        Creates a `Segment` that contains a subset of it's `Molecule` atoms.
+        """Creates a `Segment` that contains a subset of its `Molecule` atoms.
 
         Segments are defined as containing a certain number of monomers.
         For example, if you want 3 subsequent monomers contained in a single
