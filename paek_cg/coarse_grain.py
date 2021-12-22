@@ -1,21 +1,47 @@
-from cmeutils.gsd_utils import snap_molecule_cluster
+from cmeutils.gsd_utils import get_molecule_cluster
 from paek_cg.writers import write_snapshot
 import gsd
 import gsd.hoomd
 import freud
+import json
 import numpy as np
+from paek_cg.compounds import COMPOUND_DIR
 
 class System:
     """
     """
     def __init__(
-            self, atoms_per_monomer, gsd_file=None, gsd_frame=-1
+            self,
+            compound=None,
+            atoms_per_monomer=None,
+            gsd_file=None,
+            gsd_frame=-1
         ):
         self.gsd_file = gsd_file
-        self.atoms_per_monomer = atoms_per_monomer
-        self.update_frame(gsd_frame) # Sets self.frame and self.snap
+        self.update_frame(gsd_frame) # Sets self.frame, self.snap, self.box
         self.contains_H = self._check_for_Hs()
-        self.clusters = snap_molecule_cluster(snap=self.snap)
+        self.compound = compound
+        if self.compound != None:
+            try:
+                f = open(f"{COMPOUND_DIR}/{self.compound}.json")
+            except FileNotFoundError:
+                raise ValueError(
+                    f"No file was found in {COMPOUND_DIR} for {self.compound}"
+                )
+            self.comp_dict = json.load(f) 
+            f.close()
+            if self.contains_H:
+                self.atoms_per_monomer = self.comp_dict[
+                        "atoms_per_monomer_AA"
+                        ]
+            elif not self.contains_H:
+                self.atoms_per_monomer = self.comp_dict[
+                        "atoms_per_monomer_UA"
+                        ]
+        elif self.compound == None:
+            self.atoms_per_monomer = atoms_per_monomer
+
+        self.clusters = get_molecule_cluster(snap=self.snap)
         self.molecule_ids = set(self.clusters)
         self.n_molecules = len(self.molecule_ids)
         self.n_atoms = len(self.clusters)
@@ -89,7 +115,7 @@ class System:
 
         Yields:
         -------
-        polymers.Monomer
+        Monomer
      
         """
         for molecule in self.molecules:
@@ -102,7 +128,7 @@ class System:
 
         Yields:
         -------
-        polymers.Segment
+        Segment
 
         """
         for molecule in self.molecules:
@@ -114,7 +140,7 @@ class System:
 
         Yields:
         -------
-        polymers.Component
+        Component
 
         """
         for monomer in self.monomers():
@@ -196,6 +222,7 @@ class System:
         return bond_angles
 
     def _check_for_Hs(self):
+        """Returns True if the gsd snapshot contains hydrogen type atoms"""
         hydrogen_types = ["ha", "h", "ho", "h4"]
         if any([h in list(self.snap.particles.types) for h in hydrogen_types]):
             return True
@@ -207,7 +234,7 @@ class Structure:
 
     Parameters:
     -----------
-    system : 'cmeutils.polymers.System', required
+    system : 'System()', required
         The system object initially created from the input .gsd file.
     atom_indices : np.ndarray(n, 3), optional, default=None
         The atom indices in the system that belong to this specific structure.
@@ -339,7 +366,38 @@ class Structure:
         return np.array([x_mean, y_mean, z_mean])
 
 class Molecule(Structure):
-    """
+    """The Structure object containing information about the entire molecule.
+
+    Parameters:
+    -----------
+    system : 'System()', required
+        The system object initially created from the input .gsd file.
+    molecule_id : int, optional, default=None
+        The ID number of the specific molecule from system.molecule_ids.
+
+    Attributes:
+    -----------
+    system : 'System()'
+        The system that this structure belong to. Contains needed information
+        about the box, and gsd snapshot which are used elsewhere.
+    monomers : List of Monomer() objects.
+        List of Monomer objects contained only within this molecule.
+    segments : List of Segment() objects.
+        List of Segment objects contained only within this molecule.
+    components : List of Component() objects.
+        List of Component objects contained only within this molecule.
+    sequence : str
+        The monomer type sequence specific to this molecule.
+
+    Methods:
+    --------
+    assign_types : Assigns the type names to each child monomer bead
+        Requires that the Molecule.sequence attribute is defined before hand.
+    generate_segments : Creates Structure() objects for child segments.
+
+
+
+
     """
     def __init__(self, system, molecule_id):
         super(Molecule, self).__init__(
@@ -358,7 +416,16 @@ class Molecule(Structure):
             use_segments=False,
             use_components=False
         ):
-        """
+        """Assigns the type names to each child monomer bead.
+        Requires that self.sequence attribute is defined behond hand.
+        If assigning types for segments or components, they must
+        be generated first.
+        
+        Parameters:
+        -----------
+        use_monomers, use_segments, use_components : boolean
+            Specifies the type of substructure to assign types to.
+
         """
         if self.sequence is None:
             raise ValueError(
@@ -391,8 +458,7 @@ class Molecule(Structure):
                 self.components[i].name = name
 
     def generate_segments(self, monomers_per_segment):
-        """
-        Creates a `Segment` that contains a subset of it's `Molecule` atoms.
+        """Creates a `Segment` that contains a subset of its `Molecule` atoms.
 
         Segments are defined as containing a certain number of monomers.
         For example, if you want 3 subsequent monomers contained in a single
@@ -538,7 +604,7 @@ class Molecule(Structure):
                 s2 = sub_structures[idx+1]
                 s3 = sub_structures[idx+2]
                 if group is not None:
-                    if group == [s.name, s2.name,s3.name]:
+                    if group == [s.name, s2.name, s3.name]:
                         pass
                     else:
                         continue
@@ -610,6 +676,18 @@ class Monomer(Structure):
         """
         if self.components:
             raise ValueError("Components have already been generated")
+        if isinstance(index_mapping, str):
+            index_mapping = self.system.comp_dict[
+                    "component_mappings"][0][index_mapping]
+        elif isinstance(index_mapping, dict):
+            pass
+        else:
+            raise ValueError("Index mapping should be a dictionary of "
+                   "bead_name: bead_indices."
+                   "Or,` a label for one of the component mappings defined "
+                   "in a compound JSON file."
+                )
+
         components = []
         for name, indices in index_mapping.items():
             if all([isinstance(i, list) for i in indices]):
