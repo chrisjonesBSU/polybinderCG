@@ -2,8 +2,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
-def plot_distribution(data, label=None, plot=True, xlim=(None, None), fit_line=True):
+def plot_distribution(
+        data,
+        label=None,
+        plot=True,
+        xlim=(None, None),
+        fit_line=True,
+        normalize=False,
+        ):
     bin_heights, bin_borders = np.histogram(data, bins='auto')
+    if normalize is True:
+            bin_heights = [float(i)/sum(bin_heights) for i in bin_heights]
     bin_widths = np.diff(bin_borders)
     bin_centers = bin_borders[:-1] + bin_widths / 2
     if plot:
