@@ -235,6 +235,8 @@ class System:
                 use_components=use_components,
                 group=group
             )
+        )
+        return dihedrals
 
     def _update_frame(self, frame):
         self.frame = frame
