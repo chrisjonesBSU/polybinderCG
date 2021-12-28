@@ -18,7 +18,7 @@ class System:
             gsd_frame=-1
         ):
         self.gsd_file = gsd_file
-        self.update_frame(gsd_frame) # Sets self.frame, self.snap, self.box
+        self._update_frame(gsd_frame) # Sets self.frame, self.snap, self.box
         self.contains_H = self._check_for_Hs()
         self.compound = compound
         if self.compound != None:
@@ -47,13 +47,6 @@ class System:
         self.n_atoms = len(self.clusters)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
 
-    def update_frame(self, frame):
-        self.frame = frame
-        with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
-            self.snap = f[frame]
-            self.box = self.snap.configuration.box
-            self.n_frames = len(f) 
-
     def coarse_grain_trajectory(
             self,
             file_path,
@@ -63,6 +56,8 @@ class System:
             first_frame = 0,
             last_frame = -1
         ):
+        """
+        """
         args = [use_monomers, use_segments, use_components]
         if args.count(True) > 1:
             raise ValueError("You can only choose one of monomers, "
@@ -79,18 +74,20 @@ class System:
             last_frame = self.n_frames + last_frame + 1
         with gsd.hoomd.open(file_path, mode="wb") as f:
             for i in range(first_frame, last_frame):
-                self.update_frame(frame=i)
+                self._update_frame(frame=i)
                 snap = self.coarse_grain_snap(
                         use_monomers=use_monomers,
                         use_segments=use_segments,
                         use_components=use_components
                         )
                 f.append(snap)
-        self.update_frame(frame=current_frame)
+        self._update_frame(frame=current_frame)
 
-    def coarse_grain_snap(self,
-            use_monomers=False, use_segments=False,use_components=False
+    def coarse_grain_snap(
+            self, use_monomers=False, use_segments=False,use_components=False
         ):
+        """
+        """
         if use_monomers:
             structures = [i for i in self.monomers()]
         elif use_segments:
@@ -238,6 +235,13 @@ class System:
                 use_components=use_components,
                 group=group
             )
+
+    def _update_frame(self, frame):
+        self.frame = frame
+        with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
+            self.snap = f[frame]
+            self.box = self.snap.configuration.box
+            self.n_frames = len(f) 
 
     def _check_for_Hs(self):
         """Returns True if the gsd snapshot contains hydrogen type atoms"""
@@ -645,6 +649,20 @@ class Molecule(Structure):
             ):
         """Generates a list of the dihedrals between subsequent bond vectors.
         
+        Parameters:
+        -----------
+        use_monomers : bool, optional, default=True
+            Set to True to return angles between the Molecule's monomers
+        use_segments : bool, optional, default=False
+            Set to True to return angles between the Molecule's segments
+        use_components : bool, optional, default=False
+            Set to True to reutrn the angles between the Molecule's components
+
+        Returns:
+        --------
+        list of numpy.ndarray, shape=(3,), dtype=float
+        The dihedral angles are given in radians
+
         """
         bonds = self.bond_vectors(use_monomers, use_segments, use_components)
         dihedrals = [] 
@@ -667,8 +685,6 @@ class Molecule(Structure):
         pass
 
     def _sub_structures(self, monomers, segments, components):
-        """
-        """
         args = [monomers, segments, components]
         if args.count(True) > 1:
             raise ValueError(
