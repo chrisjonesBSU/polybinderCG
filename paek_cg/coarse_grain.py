@@ -229,7 +229,7 @@ class System:
         """
         dihedrals = []
         for mol in self.molecules:
-            dihedrals.extend(mol.dihedrals(
+            dihedrals.extend(mol.bond_dihedrals(
                 use_monomers=use_monomers,
                 use_segments=use_segments,
                 use_components=use_components,
