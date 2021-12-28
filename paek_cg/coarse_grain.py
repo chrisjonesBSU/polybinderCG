@@ -247,6 +247,7 @@ class System:
         else:
             return False
 
+
 class Structure:
     """Base class for the Molecule(), Segment(), and Monomer() classes.
 
@@ -382,6 +383,7 @@ class Structure:
         y_mean = np.mean(self.unwrapped_atom_positions[:,1])
         z_mean = np.mean(self.unwrapped_atom_positions[:,2])
         return np.array([x_mean, y_mean, z_mean])
+
 
 class Molecule(Structure):
     """The Structure object containing information about the entire molecule.
