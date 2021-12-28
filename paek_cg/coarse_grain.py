@@ -221,6 +221,24 @@ class System:
         )
         return bond_angles
 
+    def dihedral_angles(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            group=None,
+        ):
+        """
+        """
+        dihedrals = []
+        for mol in self.molecules:
+            dihedrals.extend(mol.dihedrals(
+                use_monomers=use_monomers,
+                use_segments=use_segments,
+                use_components=use_components,
+                group=group
+            )
+
     def _check_for_Hs(self):
         """Returns True if the gsd snapshot contains hydrogen type atoms"""
         hydrogen_types = ["ha", "h", "ho", "h4"]
@@ -394,8 +412,6 @@ class Molecule(Structure):
     assign_types : Assigns the type names to each child monomer bead
         Requires that the Molecule.sequence attribute is defined before hand.
     generate_segments : Creates Structure() objects for child segments.
-
-
 
 
     """
@@ -617,6 +633,31 @@ class Molecule(Structure):
             except IndexError:
                 pass
         return angles
+
+    def bond_dihedrals(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            group=None
+            ):
+        """Generates a list of the dihedrals between subsequent bond vectors.
+        
+        """
+        bonds = self.bond_vectors(use_monomers, use_segments, use_components)
+        dihedrals = [] 
+        for idx, vec in enumerate(bonds):
+            try:
+                vec2 = bonds[idx+1]
+                vec3 = bonds[idx+2]
+                num = np.dot(np.cross(vec, vec2), np.cross(vec2, vec3))
+                denom = (np.linalg.norm(
+                    np.cross(vec, vec2)))*(
+                            np.linalg.norm(np.cross(vec2, vec3)))
+                dihedrals.append(np.arccos(num/denom))
+            except IndexError:
+                pass
+        return dihedrals
 
     def persistence_length(self):
         ""
