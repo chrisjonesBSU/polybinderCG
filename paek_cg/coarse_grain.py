@@ -181,6 +181,7 @@ class System:
             use_segments=False,
             use_components=False,
             pair=None,
+            exclude_ends=False
         ):
         """
         """
@@ -193,6 +194,7 @@ class System:
                         use_components=use_components,
                         normalize=normalize,
                         pair=pair,
+                        exclude_ends=exclude_ends
                         )
                     ]
                 )
@@ -536,7 +538,8 @@ class Molecule(Structure):
             use_segments=False,
             use_components=False,
             normalize=False,
-            pair=None
+            pair=None,
+            exclude_ends=False
             ):
         """Generates a list of the vectors connecting subsequent monomer 
         or segment units.
@@ -570,6 +573,9 @@ class Molecule(Structure):
 
         vectors = []
         for idx, s in enumerate(sub_structures):
+            if exclude_ends:
+                if idx == 0 or idx == len(sub_structures) - 1:
+                    continue
             try:
                 s2 = sub_structures[idx+1]
                 if pair:
