@@ -218,7 +218,7 @@ class System:
         )
         return bond_angles
 
-    def dihedral_angles(
+    def bond_dihedrals(
             self,
             use_monomers=False,
             use_segments=False,
