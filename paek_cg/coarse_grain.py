@@ -18,7 +18,7 @@ class System:
             gsd_frame=-1
         ):
         self.gsd_file = gsd_file
-        self._update_frame(gsd_frame) # Sets self.frame, self.snap, self.box
+        self.update_frame(gsd_frame) # Sets self.frame, self.snap, self.box
         self.contains_H = self._check_for_Hs()
         self.compound = compound
         if self.compound != None:
@@ -74,14 +74,14 @@ class System:
             last_frame = self.n_frames + last_frame + 1
         with gsd.hoomd.open(file_path, mode="wb") as f:
             for i in range(first_frame, last_frame):
-                self._update_frame(frame=i)
+                self.update_frame(frame=i)
                 snap = self.coarse_grain_snap(
                         use_monomers=use_monomers,
                         use_segments=use_segments,
                         use_components=use_components
                         )
                 f.append(snap)
-        self._update_frame(frame=current_frame)
+        self.update_frame(frame=current_frame)
 
     def coarse_grain_snap(
             self, use_monomers=False, use_segments=False,use_components=False
@@ -240,7 +240,7 @@ class System:
         )
         return dihedrals
 
-    def _update_frame(self, frame):
+    def update_frame(self, frame):
         self.frame = frame
         with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
             self.snap = f[frame]
