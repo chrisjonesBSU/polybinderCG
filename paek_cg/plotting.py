@@ -9,12 +9,16 @@ def plot_distribution(
         xlim=(None, None),
         fit_line=True,
         normalize=False,
+        normalize_angles=False
         ):
     bin_heights, bin_borders = np.histogram(data, bins='auto')
     if normalize is True:
-            bin_heights = [float(i)/sum(bin_heights) for i in bin_heights]
+        bin_heights = [float(i)/sum(bin_heights) for i in bin_heights]
     bin_widths = np.diff(bin_borders)
     bin_centers = bin_borders[:-1] + bin_widths / 2
+    if normalize_angles is True:
+        bin_heights = [h/np.sin(bin_centers[i]) for i,h in enumerate(bin_heights)]
+
     if plot:
         plt.bar(bin_centers, bin_heights, width=bin_widths, label=label)
         plt.xlim(xlim)
