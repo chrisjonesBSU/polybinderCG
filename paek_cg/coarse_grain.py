@@ -47,13 +47,6 @@ class System:
         self.n_atoms = len(self.clusters)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
 
-    def update_frame(self, frame):
-        self.frame = frame
-        with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
-            self.snap = f[frame]
-            self.box = self.snap.configuration.box
-            self.n_frames = len(f) 
-
     def coarse_grain_trajectory(
             self,
             file_path,
@@ -63,6 +56,8 @@ class System:
             first_frame = 0,
             last_frame = -1
         ):
+        """
+        """
         args = [use_monomers, use_segments, use_components]
         if args.count(True) > 1:
             raise ValueError("You can only choose one of monomers, "
@@ -88,9 +83,11 @@ class System:
                 f.append(snap)
         self.update_frame(frame=current_frame)
 
-    def coarse_grain_snap(self,
-            use_monomers=False, use_segments=False,use_components=False
+    def coarse_grain_snap(
+            self, use_monomers=False, use_segments=False,use_components=False
         ):
+        """
+        """
         if use_monomers:
             structures = [i for i in self.monomers()]
         elif use_segments:
@@ -184,6 +181,7 @@ class System:
             use_segments=False,
             use_components=False,
             pair=None,
+            exclude_ends=False
         ):
         """
         """
@@ -196,6 +194,7 @@ class System:
                         use_components=use_components,
                         normalize=normalize,
                         pair=pair,
+                        exclude_ends=exclude_ends
                         )
                     ]
                 )
@@ -221,6 +220,33 @@ class System:
         )
         return bond_angles
 
+    def bond_dihedrals(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            group=None,
+        ):
+        """
+        """
+        dihedrals = []
+        for mol in self.molecules:
+            dihedrals.extend(mol.bond_dihedrals(
+                use_monomers=use_monomers,
+                use_segments=use_segments,
+                use_components=use_components,
+                group=group
+            )
+        )
+        return dihedrals
+
+    def update_frame(self, frame):
+        self.frame = frame
+        with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
+            self.snap = f[frame]
+            self.box = self.snap.configuration.box
+            self.n_frames = len(f) 
+
     def _check_for_Hs(self):
         """Returns True if the gsd snapshot contains hydrogen type atoms"""
         hydrogen_types = ["ha", "h", "ho", "h4"]
@@ -228,6 +254,7 @@ class System:
             return True
         else:
             return False
+
 
 class Structure:
     """Base class for the Molecule(), Segment(), and Monomer() classes.
@@ -365,6 +392,7 @@ class Structure:
         z_mean = np.mean(self.unwrapped_atom_positions[:,2])
         return np.array([x_mean, y_mean, z_mean])
 
+
 class Molecule(Structure):
     """The Structure object containing information about the entire molecule.
 
@@ -394,8 +422,6 @@ class Molecule(Structure):
     assign_types : Assigns the type names to each child monomer bead
         Requires that the Molecule.sequence attribute is defined before hand.
     generate_segments : Creates Structure() objects for child segments.
-
-
 
 
     """
@@ -512,7 +538,8 @@ class Molecule(Structure):
             use_segments=False,
             use_components=False,
             normalize=False,
-            pair=None
+            pair=None,
+            exclude_ends=False
             ):
         """Generates a list of the vectors connecting subsequent monomer 
         or segment units.
@@ -546,6 +573,9 @@ class Molecule(Structure):
 
         vectors = []
         for idx, s in enumerate(sub_structures):
+            if exclude_ends:
+                if idx == 0 or idx == len(sub_structures) - 1:
+                    continue
             try:
                 s2 = sub_structures[idx+1]
                 if pair:
@@ -618,14 +648,51 @@ class Molecule(Structure):
                 pass
         return angles
 
+    def bond_dihedrals(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            group=None
+            ):
+        """Generates a list of the dihedrals between subsequent bond vectors.
+        
+        Parameters:
+        -----------
+        use_monomers : bool, optional, default=True
+            Set to True to return angles between the Molecule's monomers
+        use_segments : bool, optional, default=False
+            Set to True to return angles between the Molecule's segments
+        use_components : bool, optional, default=False
+            Set to True to reutrn the angles between the Molecule's components
+
+        Returns:
+        --------
+        list of numpy.ndarray, shape=(3,), dtype=float
+        The dihedral angles are given in radians
+
+        """
+        bonds = self.bond_vectors(use_monomers, use_segments, use_components)
+        dihedrals = [] 
+        for idx, vec in enumerate(bonds):
+            try:
+                vec2 = bonds[idx+1]
+                vec3 = bonds[idx+2]
+                num = np.dot(np.cross(vec, vec2), np.cross(vec2, vec3))
+                denom = (np.linalg.norm(
+                    np.cross(vec, vec2)))*(
+                            np.linalg.norm(np.cross(vec2, vec3)))
+                dihedrals.append(np.arccos(num/denom))
+            except IndexError:
+                pass
+        return dihedrals
+
     def persistence_length(self):
         ""
         ""
         pass
 
     def _sub_structures(self, monomers, segments, components):
-        """
-        """
         args = [monomers, segments, components]
         if args.count(True) > 1:
             raise ValueError(
