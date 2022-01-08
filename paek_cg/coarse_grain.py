@@ -164,7 +164,13 @@ class System:
         distances = [mol.end_to_end_distance(squared) for mol in self.molecules]
         return distances 
 
-    def radii_of_gyration(self, squared=True):
+    def radii_of_gyration(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            squared=True
+        ):
         """
         """
         pass
@@ -423,7 +429,6 @@ class Molecule(Structure):
         Requires that the Molecule.sequence attribute is defined before hand.
     generate_segments : Creates Structure() objects for child segments.
 
-
     """
     def __init__(self, system, molecule_id):
         super(Molecule, self).__init__(
@@ -504,33 +509,6 @@ class Molecule(Structure):
                 segments_per_molecule
                 )
         self.segments.extend([Segment(self, i) for i in segment_indices])
-    
-    def end_to_end_distance(self, squared=False):
-        """Retruns the magnitude of the vector connecting the first and
-        last monomer in Molecule.monomers. Uses each monomer's center
-        coordinates.
-
-        Parameters:
-        -----------
-        squared : bool, optional default=False
-            Set to True if you want the squared end-to-end distance
-
-        Returns:
-        --------
-        numpy.ndarray, shape=(1,), dtype=float
-
-        """
-        head = self.monomers[0]
-        tail = self.monomers[-1]
-        distance = np.linalg.norm(
-                tail.unwrapped_center - head.unwrapped_center
-                )
-        if squared:
-            distance = distance**2
-        return distance
-    
-    def radius_of_gyration(self):
-        pass
     
     def bond_vectors(
             self,
@@ -686,6 +664,65 @@ class Molecule(Structure):
             except IndexError:
                 pass
         return dihedrals
+
+    def end_to_end_distance(self, squared=False):
+        """Retruns the magnitude of the vector connecting the first and
+        last monomer in Molecule.monomers. Uses each monomer's center
+        coordinates.
+
+        Parameters:
+        -----------
+        squared : bool, optional default=False
+            Set to True if you want the squared end-to-end distance
+
+        Returns:
+        --------
+        numpy.ndarray, shape=(1,), dtype=float
+
+        """
+        head = self.monomers[0]
+        tail = self.monomers[-1]
+        distance = np.linalg.norm(
+                tail.unwrapped_center - head.unwrapped_center
+                )
+        if squared:
+            distance = distance**2
+        return distance
+
+    def radius_of_gyration(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            group=None
+            ):
+        """Finds the radius of gyrtation (Rg) 
+
+        Parameters:
+        -----------
+        use_monomers : bool, optional, default=True
+            Set to True to use the Molecule's monomers when finding Rg.
+        use_segments : bool, optional, default=False
+            Set to True to use the Molecule's segments when finding Rg.
+        use_components : bool, optional, default=False
+            Set to True to use the Molecule's components when finding Rg.
+
+        Returns:
+        --------
+        float : Radius of gyration of the molecule
+
+        """
+        sub_structures = self._sub_structures(
+                use_monomers,
+                use_segments,
+                use_components
+                )
+        struc_pos = np.array([s.unwrapped_center for s in sub_structures])
+        mol_center = self.unwrapped_center
+        radius_of_gyration = (
+                np.sum([(i - mol_center)**2 for i in struc_pos])
+            ) / len(struc_pos)
+        return radius_of_gyration
 
     def persistence_length(self):
         ""
