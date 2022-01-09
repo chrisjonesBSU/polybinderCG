@@ -5,11 +5,26 @@ import numpy as np
 import re
 
 def write_snapshot(beads, rewrap=True, box_expand=None):
-    """
+    """Creates a gsd.hoomd.snapshot of a coarse-grained mapping.
+
+    Parameters
+    ----------
     beads : iterable, required
-        An iterable of any of the structure classes in polymer.py
-        If you want to coarse-grain based on monomers, pass in a list of
-        System's monomers.
+        An iterable of any of the structure classes in coarse_grain.py
+        For example, if you want to coarse-grain based on monomers,
+        pass in a list of System's monomer objects.
+    rewrap : bool, defualt=True
+        Set to True to rewrap the beads into the system accounting
+        for periodic boundaries
+    box_expand = int, default=None
+        If not rewrapping the beads, set a factor in which to increase
+        the box size.
+
+    Returns
+    -------
+    gsd.hoomd.snapshot
+        A snapshot of the coarse-grained representation.
+
     """
     all_types = []
     all_pairs = []
