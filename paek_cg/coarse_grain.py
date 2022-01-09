@@ -56,7 +56,18 @@ class System:
             first_frame = 0,
             last_frame = -1
         ):
-        """
+        """Creates a new GSD file of the coarse-grained
+        representaiton of the system.
+
+        Parameters
+        ----------
+        use_monomers : bool, optional, default=True
+            Set to True to use the molecule's Monomers as the CG beads.
+        use_segments : bool, optional, default=False
+            Set to True to use the molecule's Components as the CG beads.
+        use_components : bool, optional, default=False
+            Set to True to use the molecule's Components as the CG beads.
+
         """
         args = [use_monomers, use_segments, use_components]
         if args.count(True) > 1:
@@ -86,7 +97,22 @@ class System:
     def coarse_grain_snap(
             self, use_monomers=False, use_segments=False,use_components=False
         ):
-        """
+        """Creates a gsd.hoomd.snapshot of a coarse-grained representation.
+
+        Parameters
+        ----------
+        use_monomers : bool, optional, default=True
+            Set to True to use the molecule's Monomers as the CG beads.
+        use_segments : bool, optional, default=False
+            Set to True to use the molecule's Components as the CG beads.
+        use_components : bool, optional, default=False
+            Set to True to use the molecule's Components as the CG beads.
+
+        Returns
+        -------
+        gsd.hoomd.snapshot
+            A snapshot of the coarse-grained representation.
+
         """
         if use_monomers:
             structures = [i for i in self.monomers()]
@@ -107,8 +133,7 @@ class System:
         return write_snapshot(structures)
 
     def monomers(self):
-        """Generate all of the monomers from each molecule
-        in System.molecules.
+        """Generate all of the monomers from each molecule in System.molecules.
 
         Yields:
         -------
@@ -120,8 +145,7 @@ class System:
                 yield monomer
 
     def segments(self):
-        """Generate all of the segments from each molecule
-        in System.
+        """Generate all of the segments from each molecule in System.
 
         Yields:
         -------
@@ -145,17 +169,16 @@ class System:
                 yield component
 
     def end_to_end_distances(self, squared=True):
-        """Returns the end-to-end distances of each 
-        molecule in the system.
+        """Returns the end-to-end distances of each molecule in the system.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         squared : bool, optional, default=False
             Set to True if you want the mean squared average
             end-to-end distance.
 
-        Returns:
-        --------
+        Returns
+        -------
         numpy.ndarray, shape=(1,self.n_molecules), dtype=float
             The average end-to-end distance averaged over all of the
             molecules in System.molecules
@@ -169,11 +192,11 @@ class System:
             use_monomers=False,
             use_segments=False,
             use_components=False,
-            squared=True
         ):
+        """Returns the radius of gyration for each molecule in the system.
         """
-        """
-        pass
+        radii_gyration = [mol.radius_of_gyration) for mol in self.molecules]
+        return radii_gyration
 
     def persistence_lengths(self):
         """
@@ -247,6 +270,7 @@ class System:
         return dihedrals
 
     def update_frame(self, frame):
+        """Change the frame of the atomistic trajectory."""
         self.frame = frame
         with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
             self.snap = f[frame]
@@ -604,7 +628,7 @@ class Molecule(Structure):
                 use_monomers,
                 use_segments,
                 use_components
-                )
+            )
 
         angles = []
         for idx, s in enumerate(sub_structures):
@@ -695,7 +719,7 @@ class Molecule(Structure):
             use_segments=False,
             use_components=False,
             group=None
-            ):
+        ):
         """Finds the radius of gyrtation (Rg) 
 
         Parameters:
