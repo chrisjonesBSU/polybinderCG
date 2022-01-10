@@ -195,7 +195,9 @@ class System:
         ):
         """Returns the radius of gyration for each molecule in the system.
         """
-        radii_gyration = [mol.radius_of_gyration) for mol in self.molecules]
+        radii_gyration = [mol.radius_of_gyration(
+                use_monomers, use_segments, use_components
+            ) for mol in self.molecules]
         return radii_gyration
 
     def persistence_lengths(self):
