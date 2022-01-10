@@ -1,11 +1,11 @@
 from cmeutils.gsd_utils import get_molecule_cluster
-from paek_cg.writers import write_snapshot
+from polybinderCG.writers import write_snapshot
 import gsd
 import gsd.hoomd
 import freud
 import json
 import numpy as np
-from paek_cg.compounds import COMPOUND_DIR
+from polybinderCG.compounds import COMPOUND_DIR
 
 class System:
     """

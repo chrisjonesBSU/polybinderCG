@@ -1,4 +1,4 @@
-name: paek_cg 
+name: polybinderCG 
 channels:
   - conda-forge
 dependencies:
