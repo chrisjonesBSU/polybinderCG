@@ -193,7 +193,9 @@ class System:
             use_segments=False,
             use_components=False,
         ):
-        """Returns the radius of gyration for each molecule in the system.
+        """Returns the squared radius of gyration for each molecule
+        in the system.
+
         """
         radii_gyration = [mol.radius_of_gyration(
                 use_monomers, use_segments, use_components
@@ -722,7 +724,7 @@ class Molecule(Structure):
             use_components=False,
             group=None
         ):
-        """Finds the radius of gyrtation (Rg) 
+        """Finds the squared radius of gyrtation (Rg) 
 
         Parameters:
         -----------
