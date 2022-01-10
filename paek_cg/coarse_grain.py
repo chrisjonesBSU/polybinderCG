@@ -56,7 +56,18 @@ class System:
             first_frame = 0,
             last_frame = -1
         ):
-        """
+        """Creates a new GSD file of the coarse-grained
+        representaiton of the system.
+
+        Parameters
+        ----------
+        use_monomers : bool, optional, default=True
+            Set to True to use the molecule's Monomers as the CG beads.
+        use_segments : bool, optional, default=False
+            Set to True to use the molecule's Components as the CG beads.
+        use_components : bool, optional, default=False
+            Set to True to use the molecule's Components as the CG beads.
+
         """
         args = [use_monomers, use_segments, use_components]
         if args.count(True) > 1:
@@ -86,7 +97,22 @@ class System:
     def coarse_grain_snap(
             self, use_monomers=False, use_segments=False,use_components=False
         ):
-        """
+        """Creates a gsd.hoomd.snapshot of a coarse-grained representation.
+
+        Parameters
+        ----------
+        use_monomers : bool, optional, default=True
+            Set to True to use the molecule's Monomers as the CG beads.
+        use_segments : bool, optional, default=False
+            Set to True to use the molecule's Components as the CG beads.
+        use_components : bool, optional, default=False
+            Set to True to use the molecule's Components as the CG beads.
+
+        Returns
+        -------
+        gsd.hoomd.snapshot
+            A snapshot of the coarse-grained representation.
+
         """
         if use_monomers:
             structures = [i for i in self.monomers()]
@@ -107,8 +133,7 @@ class System:
         return write_snapshot(structures)
 
     def monomers(self):
-        """Generate all of the monomers from each molecule
-        in System.molecules.
+        """Generate all of the monomers from each molecule in System.molecules.
 
         Yields:
         -------
@@ -120,8 +145,7 @@ class System:
                 yield monomer
 
     def segments(self):
-        """Generate all of the segments from each molecule
-        in System.
+        """Generate all of the segments from each molecule in System.
 
         Yields:
         -------
@@ -145,17 +169,16 @@ class System:
                 yield component
 
     def end_to_end_distances(self, squared=True):
-        """Returns the end-to-end distances of each 
-        molecule in the system.
+        """Returns the end-to-end distances of each molecule in the system.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         squared : bool, optional, default=False
             Set to True if you want the mean squared average
             end-to-end distance.
 
-        Returns:
-        --------
+        Returns
+        -------
         numpy.ndarray, shape=(1,self.n_molecules), dtype=float
             The average end-to-end distance averaged over all of the
             molecules in System.molecules
@@ -164,10 +187,20 @@ class System:
         distances = [mol.end_to_end_distance(squared) for mol in self.molecules]
         return distances 
 
-    def radii_of_gyration(self, squared=True):
+    def radii_of_gyration(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+        ):
+        """Returns the squared radius of gyration for each molecule
+        in the system.
+
         """
-        """
-        pass
+        radii_gyration = [mol.radius_of_gyration(
+                use_monomers, use_segments, use_components
+            ) for mol in self.molecules]
+        return radii_gyration
 
     def persistence_lengths(self):
         """
@@ -241,6 +274,7 @@ class System:
         return dihedrals
 
     def update_frame(self, frame):
+        """Change the frame of the atomistic trajectory."""
         self.frame = frame
         with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
             self.snap = f[frame]
@@ -423,7 +457,6 @@ class Molecule(Structure):
         Requires that the Molecule.sequence attribute is defined before hand.
     generate_segments : Creates Structure() objects for child segments.
 
-
     """
     def __init__(self, system, molecule_id):
         super(Molecule, self).__init__(
@@ -504,33 +537,6 @@ class Molecule(Structure):
                 segments_per_molecule
                 )
         self.segments.extend([Segment(self, i) for i in segment_indices])
-    
-    def end_to_end_distance(self, squared=False):
-        """Retruns the magnitude of the vector connecting the first and
-        last monomer in Molecule.monomers. Uses each monomer's center
-        coordinates.
-
-        Parameters:
-        -----------
-        squared : bool, optional default=False
-            Set to True if you want the squared end-to-end distance
-
-        Returns:
-        --------
-        numpy.ndarray, shape=(1,), dtype=float
-
-        """
-        head = self.monomers[0]
-        tail = self.monomers[-1]
-        distance = np.linalg.norm(
-                tail.unwrapped_center - head.unwrapped_center
-                )
-        if squared:
-            distance = distance**2
-        return distance
-    
-    def radius_of_gyration(self):
-        pass
     
     def bond_vectors(
             self,
@@ -626,7 +632,7 @@ class Molecule(Structure):
                 use_monomers,
                 use_segments,
                 use_components
-                )
+            )
 
         angles = []
         for idx, s in enumerate(sub_structures):
@@ -686,6 +692,65 @@ class Molecule(Structure):
             except IndexError:
                 pass
         return dihedrals
+
+    def end_to_end_distance(self, squared=False):
+        """Retruns the magnitude of the vector connecting the first and
+        last monomer in Molecule.monomers. Uses each monomer's center
+        coordinates.
+
+        Parameters:
+        -----------
+        squared : bool, optional default=False
+            Set to True if you want the squared end-to-end distance
+
+        Returns:
+        --------
+        numpy.ndarray, shape=(1,), dtype=float
+
+        """
+        head = self.monomers[0]
+        tail = self.monomers[-1]
+        distance = np.linalg.norm(
+                tail.unwrapped_center - head.unwrapped_center
+                )
+        if squared:
+            distance = distance**2
+        return distance
+
+    def radius_of_gyration(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            group=None
+        ):
+        """Finds the squared radius of gyrtation (Rg) 
+
+        Parameters:
+        -----------
+        use_monomers : bool, optional, default=True
+            Set to True to use the Molecule's monomers when finding Rg.
+        use_segments : bool, optional, default=False
+            Set to True to use the Molecule's segments when finding Rg.
+        use_components : bool, optional, default=False
+            Set to True to use the Molecule's components when finding Rg.
+
+        Returns:
+        --------
+        float : Radius of gyration of the molecule
+
+        """
+        sub_structures = self._sub_structures(
+                use_monomers,
+                use_segments,
+                use_components
+                )
+        struc_pos = np.array([s.unwrapped_center for s in sub_structures])
+        mol_center = self.unwrapped_center
+        radius_of_gyration = (
+                np.sum([(i - mol_center)**2 for i in struc_pos])
+            ) / len(struc_pos)
+        return radius_of_gyration
 
     def persistence_length(self):
         ""
