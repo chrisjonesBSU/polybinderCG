@@ -7,7 +7,7 @@ def plot_distribution(
         label=None,
         plot=True,
         xlim=(None, None),
-        fit_line=True,
+        gaussian_fit=True,
         normalize=False,
         normalize_angles=False
         ):
@@ -24,7 +24,7 @@ def plot_distribution(
         plt.xlim(xlim)
         plt.legend()
 
-    if fit_line:
+    if gaussian_fit:
         popt, _ = curve_fit(gaussian, bin_centers, bin_heights, p0=[1., 0., 1.])
         x_fit = np.linspace(bin_borders[0], bin_borders[-1], 10000)
         y_fit = gaussian(x_fit, *popt)
