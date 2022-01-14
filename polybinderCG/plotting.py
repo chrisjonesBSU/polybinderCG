@@ -7,10 +7,13 @@ def plot_distribution(
         label=None,
         plot=True,
         xlim=(None, None),
-        gaussian_fit=True,
+        line_plot=True,
+        gaussian_fit=False,
         normalize=False,
         normalize_angles=False
         ):
+    """
+    """
     bin_heights, bin_borders = np.histogram(data, bins='auto')
     if normalize is True:
         bin_heights = [float(i)/sum(bin_heights) for i in bin_heights]
@@ -23,6 +26,11 @@ def plot_distribution(
         plt.bar(bin_centers, bin_heights, width=bin_widths, label=label)
         plt.xlim(xlim)
         plt.legend()
+        if line_plot:
+            plt.plot(bin_centers, bin_heights, "-o", linewidth=3)
+
+    if line_plot:
+        plt.plot(bin_centers, bin_heights, "-o", linewidth=3)
 
     if gaussian_fit:
         popt, _ = curve_fit(gaussian, bin_centers, bin_heights, p0=[1., 0., 1.])
