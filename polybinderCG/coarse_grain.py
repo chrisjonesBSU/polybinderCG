@@ -678,7 +678,9 @@ class Molecule(Structure):
         The dihedral angles are given in radians
 
         """
-        bonds = self.bond_vectors(use_monomers, use_segments, use_components)
+        bonds = self.bond_vectors(
+                use_monomers, use_segments, use_components, True
+            )
         dihedrals = [] 
         for idx, vec in enumerate(bonds):
             try:
