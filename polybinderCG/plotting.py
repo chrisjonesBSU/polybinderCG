@@ -27,10 +27,12 @@ def plot_distribution(
         plt.xlim(xlim)
         plt.legend()
         if line_plot:
-            plt.plot(bin_centers, bin_heights, "-o", linewidth=3)
+            smoothed = np.convolve(bin_heights, np.ones(5), "same") / 5 
+            plt.plot(bin_centers, smoothed, "-", linewidth=5)
 
     if line_plot:
-        plt.plot(bin_centers, bin_heights, "-o", linewidth=3)
+        smoothed = np.convolve(bin_heights, np.ones(5), "same") / 5 
+        plt.plot(bin_centers, smoothed, "-", linewidth=5)
 
     if gaussian_fit:
         popt, _ = curve_fit(gaussian, bin_centers, bin_heights, p0=[1., 0., 1.])
