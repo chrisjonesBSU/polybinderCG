@@ -640,7 +640,7 @@ class Molecule(Structure):
                 s2 = sub_structures[idx+1]
                 s3 = sub_structures[idx+2]
                 if group is not None:
-                    if group == [s.name, s2.name, s3.name]:
+                    if list(group) == [s.name, s2.name, s3.name]:
                         pass
                     else:
                         continue
