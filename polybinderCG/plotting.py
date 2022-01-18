@@ -25,7 +25,8 @@ def plot_distribution(
     if plot:
         plt.bar(bin_centers, bin_heights, width=bin_widths, label=label)
         plt.xlim(xlim)
-        plt.legend()
+        if label is not None:
+            plt.legend()
         if line_plot:
             smoothed = np.convolve(bin_heights, np.ones(5), "same") / 5 
             plt.plot(bin_centers, smoothed, "-", linewidth=5)
