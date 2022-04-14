@@ -16,7 +16,7 @@ class System:
             atoms_per_monomer=None,
             gsd_file=None,
             gsd_frame=-1
-        ):
+    ):
         self.gsd_file = gsd_file
         self.update_frame(gsd_frame) # Sets self.frame, self.snap, self.box
         self.contains_H = self._check_for_Hs()
@@ -55,7 +55,7 @@ class System:
             use_components=False,
             first_frame = 0,
             last_frame = -1
-        ):
+    ):
         """Creates a new GSD file of the coarse-grained
         representaiton of the system.
 
@@ -90,13 +90,13 @@ class System:
                         use_monomers=use_monomers,
                         use_segments=use_segments,
                         use_components=use_components
-                        )
+                )
                 f.append(snap)
         self.update_frame(frame=current_frame)
 
     def coarse_grain_snap(
-            self, use_monomers=False, use_segments=False,use_components=False
-        ):
+            self, use_monomers=False, use_segments=False, use_components=False
+    ):
         """Creates a gsd.hoomd.snapshot of a coarse-grained representation.
 
         Parameters
@@ -121,14 +121,14 @@ class System:
                 raise ValueError("Segments have not been created. "
                         "See the generate_segments method in "
                         "the Molecule class."
-                        )
+                )
             structures = [i for i in self.segments()]
         elif use_components:
             if len(self.molecules[0].components) == 0:
                 raise ValueError("Components have not been generated. "
                         "See the generate_components method in "
                         "the Monomer class. "
-                        )
+                )
             structures = [i for i in self.components()]
         return write_snapshot(structures)
 
@@ -192,7 +192,7 @@ class System:
             use_monomers=False,
             use_segments=False,
             use_components=False,
-        ):
+    ):
         """Returns the squared radius of gyration for each molecule
         in the system.
 
@@ -215,22 +215,22 @@ class System:
             use_components=False,
             pair=None,
             exclude_ends=False
-        ):
+    ):
         """
         """
         bond_lengths = []
         for mol in self.molecules:
             bond_lengths.extend(
                     [np.linalg.norm(vec) for vec in mol.bond_vectors(
-                        use_monomers=use_monomers,
-                        use_segments=use_segments,
-                        use_components=use_components,
-                        normalize=normalize,
-                        pair=pair,
-                        exclude_ends=exclude_ends
+                            use_monomers=use_monomers,
+                            use_segments=use_segments,
+                            use_components=use_components,
+                            normalize=normalize,
+                            pair=pair,
+                            exclude_ends=exclude_ends
                         )
                     ]
-                )
+            )
         return bond_lengths
 
     def bond_angles(
@@ -239,7 +239,7 @@ class System:
             use_segments=False,
             use_components=False,
             group=None,
-        ):
+    ):
         """
         """
         bond_angles = []
@@ -259,7 +259,7 @@ class System:
             use_segments=False,
             use_components=False,
             group=None,
-        ):
+    ):
         """
         """
         dihedrals = []
@@ -325,7 +325,7 @@ class Structure:
             name=None,
             parent=None,
             molecule_id=None
-        ):
+    ):
         self.system = system
         self.name = name
         self.parent = parent
@@ -351,11 +351,11 @@ class Structure:
             tail_indices =  self.atom_indices[_tail_indices]
             structure_length = int((self.n_atoms-(len(_head_indices)*2)) 
                     / (self.system.atoms_per_monomer - 2)
-                )
+            )
             monomer_indices = np.array_split(
                     self.atom_indices[_head_indices[-1]+1:_tail_indices[0]],
                     structure_length
-                )
+            )
             assert len(monomer_indices) == structure_length
 
             monomers = [Monomer(self, head_indices)]
@@ -394,7 +394,7 @@ class Structure:
                 Lx = self.system.box[0],
                 Ly = self.system.box[1],
                 Lz = self.system.box[2]
-                )
+        )
         return freud_box.center_of_mass(self.atom_positions)
 
     @property 
@@ -462,7 +462,7 @@ class Molecule(Structure):
         super(Molecule, self).__init__(
                 system=system,
                 molecule_id=molecule_id
-                )
+        )
         self.monomers = self.generate_monomers() 
         self.n_monomers = len(self.monomers)
         self.segments = [] 
@@ -474,7 +474,7 @@ class Molecule(Structure):
             use_monomers=True,
             use_segments=False,
             use_components=False
-        ):
+    ):
         """Assigns the type names to each child monomer bead.
         Requires that self.sequence attribute is defined behond hand.
         If assigning types for segments or components, they must
@@ -491,7 +491,7 @@ class Molecule(Structure):
                     "The sequence for each molecule must be set "
                     "before the bead types can be assigned. "
                     "See the `Molecule.sequence attribute."
-                    )
+            )
         if use_monomers:
             n = self.n_monomers // len(self.sequence)
             monomer_sequence = self.sequence * n
@@ -546,7 +546,7 @@ class Molecule(Structure):
             normalize=False,
             pair=None,
             exclude_ends=False
-            ):
+    ):
         """Generates a list of the vectors connecting subsequent monomer 
         or segment units.
 
@@ -575,7 +575,7 @@ class Molecule(Structure):
                 use_monomers,
                 use_segments,
                 use_components
-                )
+        )
 
         vectors = []
         for idx, s in enumerate(sub_structures):
@@ -603,7 +603,7 @@ class Molecule(Structure):
             use_segments=False,
             use_components=False,
             group=None
-            ):
+    ):
         """Generates a list of the angles between subsequent monomer 
         or segment bond vectors.
 
@@ -632,7 +632,7 @@ class Molecule(Structure):
                 use_monomers,
                 use_segments,
                 use_components
-            )
+        )
 
         angles = []
         for idx, s in enumerate(sub_structures):
@@ -660,7 +660,7 @@ class Molecule(Structure):
             use_segments=False,
             use_components=False,
             group=None
-            ):
+    ):
         """Generates a list of the dihedrals between subsequent bond vectors.
         
         Parameters:
@@ -723,7 +723,7 @@ class Molecule(Structure):
             use_segments=False,
             use_components=False,
             group=None
-        ):
+    ):
         """Finds the squared radius of gyrtation (Rg) 
 
         Parameters:
@@ -818,7 +818,7 @@ class Monomer(Structure):
                    "bead_name: bead_indices."
                    "Or,` a label for one of the component mappings defined "
                    "in a compound JSON file."
-                )
+            )
 
         components = []
         for name, indices in index_mapping.items():
@@ -828,14 +828,14 @@ class Monomer(Structure):
                             monomer=self,
                             name=name,
                             atom_indices = self.atom_indices[i]
-                            )
+                    )
                     components.append(component)
             else:
                 component = Component(
                         monomer=self,
                         name=name,
                         atom_indices = self.atom_indices[indices]
-                        )
+                )
                 components.append(component)
         self.components.extend(components)
         self.parent.components.extend(components)
@@ -849,11 +849,11 @@ class Segment(Structure):
                 system=molecule.system,
                 atom_indices=atom_indices,
                 parent = molecule
-                )
+        )
         self.monomers = self.generate_monomers()
         assert len(self.monomers) ==  int(
                 self.n_atoms / self.system.atoms_per_monomer
-                )
+        )
 
 
 class Component(Structure):
@@ -863,6 +863,6 @@ class Component(Structure):
                 parent=monomer.parent,
                 atom_indices=atom_indices,
                 name=name
-                )
+        )
         self.monomer = monomer
         
