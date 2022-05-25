@@ -168,7 +168,13 @@ class System:
             for component in monomer.components:
                 yield component
 
-    def end_to_end_distances(self, squared=True):
+    def end_to_end_distances(
+            self,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+            squared=True
+    ):
         """Returns the end-to-end distances of each molecule in the system.
 
         Parameters
@@ -184,7 +190,13 @@ class System:
             molecules in System.molecules
 
         """
-        distances = [mol.end_to_end_distance(squared) for mol in self.molecules]
+        distances = [mol.end_to_end_distance(
+                            use_monomers=use_monomers,
+                            use_segments=use_segments,
+                            use_components=use_components,
+                            squared=squared
+                    ) for mol in self.molecules
+        ]
         return distances 
 
     def radii_of_gyration(
@@ -198,8 +210,11 @@ class System:
 
         """
         radii_gyration = [mol.radius_of_gyration(
-                use_monomers, use_segments, use_components
-            ) for mol in self.molecules]
+                            use_monomers=use_monomers,
+                            use_segments=use_segments,
+                            use_components=use_components
+                        ) for mol in self.molecules
+        ]
         return radii_gyration
 
     def persistence_lengths(self):
@@ -693,7 +708,13 @@ class Molecule(Structure):
                 pass
         return dihedrals
 
-    def end_to_end_distance(self, squared=False):
+    def end_to_end_distance(
+            self,
+            squared=True,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False,
+    ):
         """Retruns the magnitude of the vector connecting the first and
         last monomer in Molecule.monomers. Uses each monomer's center
         coordinates.
@@ -708,12 +729,13 @@ class Molecule(Structure):
         numpy.ndarray, shape=(1,), dtype=float
 
         """
-        head = self.monomers[0]
-        tail = self.monomers[-1]
-        distance = np.linalg.norm(
-                tail.unwrapped_center - head.unwrapped_center
-                )
-        if squared:
+        sub_structures = self._sub_structures(
+                use_monomers, use_segments, use_components
+        )
+        head = sub_structures[0]
+        tail = sub_structures[-1]
+        distance = np.linalg.norm(tail.unwrapped_center - head.unwrapped_center)
+        if squared is True:
             distance = distance**2
         return distance
 
@@ -722,7 +744,6 @@ class Molecule(Structure):
             use_monomers=False,
             use_segments=False,
             use_components=False,
-            group=None
     ):
         """Finds the squared radius of gyrtation (Rg) 
 
@@ -741,10 +762,8 @@ class Molecule(Structure):
 
         """
         sub_structures = self._sub_structures(
-                use_monomers,
-                use_segments,
-                use_components
-                )
+                use_monomers, use_segments, use_components
+        )
         struc_pos = np.array([s.unwrapped_center for s in sub_structures])
         mol_center = self.unwrapped_center
         radius_of_gyration = (
@@ -763,13 +782,13 @@ class Molecule(Structure):
             raise ValueError(
                     "Only one of `monomers`, `segments`, and `components` "
                     "can be set to `True`"
-                    )
+            )
         if not any(args):
             raise ValueError(
                     "Set one of `monomers`, `segments`, `components` to "
                     "`True` depending on which structure bond vectors "
                     "you want returned."
-                    )
+            )
 
         if monomers:
             sub_structures = self.monomers
@@ -779,7 +798,7 @@ class Molecule(Structure):
                         "The segments for this molecule have not been "
                         "created. See the `generate_segments()` method for "
                         "the `Molecule` class."
-                        )
+                )
             sub_structures = self.segments
         elif components:
             if self.components == None:
@@ -787,7 +806,7 @@ class Molecule(Structure):
                         "The components for this molecule have not been "
                         "created. See the `generate_components()` method for "
                         "the `Monomer` class."
-                        )
+                )
             sub_structures = self.components
         return sub_structures
 
