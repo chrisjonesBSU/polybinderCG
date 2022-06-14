@@ -7,6 +7,8 @@ import json
 import numpy as np
 from polybinderCG.compounds import COMPOUND_DIR
 
+from math import atan2
+
 class System:
     """
     """
@@ -244,13 +246,14 @@ class System:
         """
         bond_angles = []
         for mol in self.molecules:
-            bond_angles.extend(mol.bond_angles(
-                use_monomers=use_monomers,
-                use_segments=use_segments,
-                use_components=use_components,
-                group=group
+            bond_angles.extend(
+                    mol.bond_angles(
+                        use_monomers=use_monomers,
+                        use_segments=use_segments,
+                        use_components=use_components,
+                        group=group
+                    )
             )
-        )
         return bond_angles
 
     def bond_dihedrals(
@@ -264,13 +267,14 @@ class System:
         """
         dihedrals = []
         for mol in self.molecules:
-            dihedrals.extend(mol.bond_dihedrals(
-                use_monomers=use_monomers,
-                use_segments=use_segments,
-                use_components=use_components,
-                group=group
+            dihedrals.extend(
+                    mol.bond_dihedrals(
+                        use_monomers=use_monomers,
+                        use_segments=use_segments,
+                        use_components=use_components,
+                        group=group
+                    )
             )
-        )
         return dihedrals
 
     def update_frame(self, frame):
@@ -680,15 +684,20 @@ class Molecule(Structure):
         """
         bonds = self.bond_vectors(use_monomers, use_segments, use_components)
         dihedrals = [] 
-        for idx, vec in enumerate(bonds):
+        
+        for idx, a1 in enumerate(bonds):
             try:
-                vec2 = bonds[idx+1]
-                vec3 = bonds[idx+2]
-                num = np.dot(np.cross(vec, vec2), np.cross(vec2, vec3))
-                denom = (np.linalg.norm(
-                    np.cross(vec, vec2)))*(
-                            np.linalg.norm(np.cross(vec2, vec3)))
-                dihedrals.append(np.arccos(num/denom))
+                a2 = bonds[idx+1]
+                a3 = bonds[idx+2]
+                v1 = np.cross(a1, a2)
+                v1 = v1 / (v1 * v1).sum(-1)**0.5
+                v2 = np.cross(a2, a3)
+                v2 = v2 / (v2 * v2).sum(-1)**0.5
+                porm = np.sign((v1 * a3).sum(-1))
+                rad = np.arccos((v1*v2).sum(-1) / ((v1**2).sum(-1) * (v2**2).sum(-1))**0.5)
+                if not porm == 0:
+                    rad = rad * porm
+                dihedrals.append(rad)
             except IndexError:
                 pass
         return dihedrals
