@@ -73,11 +73,11 @@ class System:
         if args.count(True) > 1:
             raise ValueError("You can only choose one of monomers, "
                     "segments or components."
-                    )
+            )
         if not any(args):
             raise ValueError("Select one of monomers, segments, "
                     "or components as the coarse-grained beads."
-                    )
+            )
         current_frame = self.frame
         if first_frame < 0:
             first_frame = self.n_frames + first_frame
@@ -130,6 +130,10 @@ class System:
                         "the Monomer class. "
                 )
             structures = [i for i in self.components()]
+        for struc in structures:
+            assert struc.name != None,(
+                "The structure chosen does not have names assigned"
+            )
         return write_snapshot(structures)
 
     def monomers(self):
