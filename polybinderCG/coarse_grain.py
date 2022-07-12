@@ -345,15 +345,20 @@ class Structure:
             assert len(monomer_indices) == structure_length
             return [Monomer(self, i) for i in monomer_indices]
         elif self.system.contains_H == True:
-            _head_indices = np.array(range(0, self.system.atoms_per_monomer - 1))
+            _head_indices = list(range(0, self.system.atoms_per_monomer - 2))
+            _tail_indices = [-i for i in range(3, self.system.atoms_per_monomer+1)]
+            _head_indices.append(-2)
+            _tail_indices.append(-1)
             head_indices = self.atom_indices[_head_indices]
-            _tail_indices = np.flip(-_head_indices - 1)
-            tail_indices =  self.atom_indices[_tail_indices]
+            tail_indices = self.atom_indices[_tail_indices]
+            tail_indices.sort()
             structure_length = int((self.n_atoms-(len(_head_indices)*2)) 
                     / (self.system.atoms_per_monomer - 2)
             )
+            start = head_indices[-2] + 1
+            stop = tail_indices[0] 
             monomer_indices = np.array_split(
-                    self.atom_indices[_head_indices[-1]+1:_tail_indices[0]],
+                    self.atom_indices[start:stop],
                     structure_length
             )
             assert len(monomer_indices) == structure_length
