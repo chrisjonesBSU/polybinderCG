@@ -345,8 +345,6 @@ class Structure:
             assert len(monomer_indices) == structure_length
             return [Monomer(self, i) for i in monomer_indices]
         elif self.system.contains_H == True:
-            if self.molecule_id == 1:
-                print(self.atom_indices)
             _head_indices = list(range(0, self.system.atoms_per_monomer - 2))
             _tail_indices = [-i for i in range(3, self.system.atoms_per_monomer+1)]
             _head_indices.append(-2)
@@ -357,12 +355,8 @@ class Structure:
             structure_length = int((self.n_atoms-(len(_head_indices)*2)) 
                     / (self.system.atoms_per_monomer - 2)
             )
-            start = head_indices[-2]+1
             start = self.system.atoms_per_monomer-2 
-            stop = tail_indices[0]
             stop = -self.system.atoms_per_monomer
-            if self.molecule_id == 1:
-                print(start, stop)
             monomer_indices = np.array_split(
                     self.atom_indices[start:stop],
                     structure_length
