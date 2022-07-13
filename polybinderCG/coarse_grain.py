@@ -287,7 +287,7 @@ class System:
 
     def _check_for_Hs(self):
         """Returns True if the gsd snapshot contains hydrogen type atoms"""
-        hydrogen_types = ["ha", "h", "ho", "h4"]
+        hydrogen_types = ["ha", "h", "ho", "h4", "opls_146", "opls_204"]
         if any([h in list(self.snap.particles.types) for h in hydrogen_types]):
             return True
         else:
