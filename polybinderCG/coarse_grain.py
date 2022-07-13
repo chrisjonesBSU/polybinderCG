@@ -37,7 +37,7 @@ class System:
             elif not self.contains_H:
                 self.atoms_per_monomer = self.comp_dict[
                         "atoms_per_monomer_UA"
-                        ]
+                ]
         elif self.compound == None:
             self.atoms_per_monomer = atoms_per_monomer
 
@@ -73,11 +73,11 @@ class System:
         if args.count(True) > 1:
             raise ValueError("You can only choose one of monomers, "
                     "segments or components."
-                    )
+            )
         if not any(args):
             raise ValueError("Select one of monomers, segments, "
                     "or components as the coarse-grained beads."
-                    )
+            )
         current_frame = self.frame
         if first_frame < 0:
             first_frame = self.n_frames + first_frame
@@ -355,8 +355,8 @@ class Structure:
             structure_length = int((self.n_atoms-(len(_head_indices)*2)) 
                     / (self.system.atoms_per_monomer - 2)
             )
-            start = head_indices[-2] + 1
-            stop = tail_indices[0] 
+            start = self.system.atoms_per_monomer-2 
+            stop = -self.system.atoms_per_monomer
             monomer_indices = np.array_split(
                     self.atom_indices[start:stop],
                     structure_length
@@ -540,7 +540,7 @@ class Molecule(Structure):
         segment_indices = np.array_split(
                 self.atom_indices,
                 segments_per_molecule
-                )
+        )
         self.segments.extend([Segment(self, i) for i in segment_indices])
     
     def bond_vectors(
@@ -717,7 +717,7 @@ class Molecule(Structure):
         tail = self.monomers[-1]
         distance = np.linalg.norm(
                 tail.unwrapped_center - head.unwrapped_center
-                )
+        )
         if squared:
             distance = distance**2
         return distance
@@ -749,7 +749,7 @@ class Molecule(Structure):
                 use_monomers,
                 use_segments,
                 use_components
-                )
+        )
         struc_pos = np.array([s.unwrapped_center for s in sub_structures])
         mol_center = self.unwrapped_center
         radius_of_gyration = (
@@ -768,14 +768,13 @@ class Molecule(Structure):
             raise ValueError(
                     "Only one of `monomers`, `segments`, and `components` "
                     "can be set to `True`"
-                    )
+            )
         if not any(args):
             raise ValueError(
                     "Set one of `monomers`, `segments`, `components` to "
                     "`True` depending on which structure bond vectors "
                     "you want returned."
-                    )
-
+            )
         if monomers:
             sub_structures = self.monomers
         elif segments:
@@ -784,7 +783,7 @@ class Molecule(Structure):
                         "The segments for this molecule have not been "
                         "created. See the `generate_segments()` method for "
                         "the `Molecule` class."
-                        )
+                )
             sub_structures = self.segments
         elif components:
             if self.components == None:
@@ -792,7 +791,7 @@ class Molecule(Structure):
                         "The components for this molecule have not been "
                         "created. See the `generate_components()` method for "
                         "the `Monomer` class."
-                        )
+                )
             sub_structures = self.components
         return sub_structures
 
@@ -805,7 +804,7 @@ class Monomer(Structure):
                 system=parent.system,
                 parent=parent,
                 atom_indices=atom_indices
-                )
+        )
         self.components = [] 
         
     def generate_components(self, index_mapping):
@@ -870,4 +869,3 @@ class Component(Structure):
                 name=name
         )
         self.monomer = monomer
-        
