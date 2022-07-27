@@ -17,5 +17,6 @@ setup(name=NAME,
       license='GPLv3',
       packages=find_packages(),
       package_dir={'polybinderCG': 'polybinderCG'},
+      package_data = {"polybinderCG": ["compounds/*"]},
       zip_safe=False,
-      )
+)
