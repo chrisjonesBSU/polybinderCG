@@ -1,0 +1,11 @@
+{"atoms_per_monomer_UA": 7,
+"atoms_per_monomer_AA": 13,
+"component_mappings":[
+	{"ring_plus_linkage_UA":
+		{"A": [0, 1, 2, 3, 4, 5, 6]}
+	,
+	"ring_plus_linkage_AA":
+		{"A": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+	}
+]
+}
