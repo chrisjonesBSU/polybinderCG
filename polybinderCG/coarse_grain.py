@@ -695,7 +695,7 @@ class Molecule(Structure):
                 v2 = v2 / (v2 * v2).sum(-1)**0.5
                 porm = np.sign((v1 * a3).sum(-1))
                 rad = np.arccos((v1*v2).sum(-1) / ((v1**2).sum(-1) * (v2**2).sum(-1))**0.5)
-                if not porm == 0:
+                if porm != 0:
                     rad = rad * porm
                 dihedrals.append(rad)
             except IndexError:
