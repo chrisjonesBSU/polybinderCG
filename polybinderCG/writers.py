@@ -31,6 +31,8 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     pair_groups = []
     all_angles = []
     angle_groups = []
+    all_dihedrals = []
+    dihedral_groups = []
     all_pos = []
     masses = []
     box = beads[0].system.box 
@@ -41,18 +43,42 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
         masses.append(bead.mass)
 
         try:
+            # Add bond type and group indices
             if bead.parent == beads[idx+1].parent:
                 pair = sorted([bead.name, beads[idx+1].name])
                 pair_type = "-".join((pair[0], pair[1]))
                 all_pairs.append(pair_type)
                 pair_groups.append([idx, idx+1])
-
+                # Add angle types and group indices
                 if bead.parent == beads[idx+2].parent:
                     b1, b2, b3 = bead.name, beads[idx+1].name, beads[idx+2].name
                     b1, b3 = sorted([b1, b3], key=_natural_sort)
                     angle_type = "-".join((b1, b2, b3))
                     all_angles.append(angle_type)
                     angle_groups.append([idx, idx+1, idx+2])
+                # Add dihedral types and group indices 
+                if bead.parent == beads[idx+3].parent:
+                    b1, b2, b3, b4 = [
+                            bead.name,
+                            beads[idx+1].name,
+                            beads[idx+2].name,
+                            beads[idx+3].name
+                    ]
+                    _b1, _b4 = sorted(
+                            [b1.name, b4.name], key=natural_sort
+                    )
+                    _b2 = b2.name
+                    _b3 = b3.name
+                    
+                    if [_b2, _b3] == sorted([_b2, b3], key=natural_sort):
+                        dihedral_type = "-".join((_b1, _b2, _b3, _b4))
+                    else:
+                        dihedral_type = "-".join((_b4, _b3, _b2, _b1))
+                    all_dihedrals.append(dihedral_type)
+                    dihedral_groups.append([idx, idx+1, idx+2, idx+3])
+
+                    
+
         except IndexError:
             pass
 
