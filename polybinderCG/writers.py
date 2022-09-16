@@ -76,18 +76,17 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
                         dihedral_type = "-".join((_b4, _b3, _b2, _b1))
                     all_dihedrals.append(dihedral_type)
                     dihedral_groups.append([idx, idx+1, idx+2, idx+3])
-
-                    
-
         except IndexError:
             pass
 
     types = list(set(all_types)) 
     pairs = list(set(all_pairs)) 
     angles = list(set(all_angles))
+    dihedrals = list(set(all_dihedrals))
     type_ids = [np.where(np.array(types)==i)[0][0] for i in all_types]
     pair_ids = [np.where(np.array(pairs)==i)[0][0] for i in all_pairs]
     angle_ids = [np.where(np.array(angles)==i)[0][0] for i in all_angles]
+    dihedral_ids = [np.where(np.array(dihedrals)==i)[0][0] for i in all_dihedrals]
 
     #Wrap the particle positions
     if rewrap:
@@ -119,6 +118,12 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     s.angles.types = angles
     s.angles.typeid = np.array(angle_ids)
     s.angles.group = np.vstack(angle_groups)
+    #Dihedrals
+    s.dihedrals.N = len(all_dihedrals)
+    s.dihedrals.M = 4
+    s.dihedrals.types = dihedrals
+    s.dihedrals.typeid = np.array(dihedral_ids)
+    s.dihedrals.group = np.vstack(dihedral_groups)
     s.configuration.box = box 
     return s
 
