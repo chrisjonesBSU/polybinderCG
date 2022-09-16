@@ -65,12 +65,12 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
                             beads[idx+3].name
                     ]
                     _b1, _b4 = sorted(
-                            [b1.name, b4.name], key=natural_sort
+                            [b1, b4], key=natural_sort
                     )
-                    _b2 = b2.name
-                    _b3 = b3.name
+                    _b2 = b2
+                    _b3 = b3
                     
-                    if [_b2, _b3] == sorted([_b2, b3], key=natural_sort):
+                    if [_b2, _b3] == sorted([_b2, _b3], key=natural_sort):
                         dihedral_type = "-".join((_b1, _b2, _b3, _b4))
                     else:
                         dihedral_type = "-".join((_b4, _b3, _b2, _b1))
