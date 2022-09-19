@@ -1,8 +1,10 @@
+import re
+
 import gsd
 import gsd.hoomd
 import freud
 import numpy as np
-import re
+
 
 def write_snapshot(beads, rewrap=True, box_expand=None):
     """Creates a gsd.hoomd.snapshot of a coarse-grained mapping.
@@ -31,6 +33,8 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     pair_groups = []
     all_angles = []
     angle_groups = []
+    all_dihedrals = []
+    dihedral_groups = []
     all_pos = []
     masses = []
     box = beads[0].system.box 
@@ -41,28 +45,47 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
         masses.append(bead.mass)
 
         try:
+            # Add bond type and group indices
             if bead.parent == beads[idx+1].parent:
                 pair = sorted([bead.name, beads[idx+1].name])
                 pair_type = "-".join((pair[0], pair[1]))
                 all_pairs.append(pair_type)
                 pair_groups.append([idx, idx+1])
-
+                # Add angle types and group indices
                 if bead.parent == beads[idx+2].parent:
                     b1, b2, b3 = bead.name, beads[idx+1].name, beads[idx+2].name
                     b1, b3 = sorted([b1, b3], key=_natural_sort)
                     angle_type = "-".join((b1, b2, b3))
                     all_angles.append(angle_type)
                     angle_groups.append([idx, idx+1, idx+2])
+                # Add dihedral types and group indices 
+                if bead.parent == beads[idx+3].parent:
+                    b1, b2, b3, b4 = [
+                            bead.name,
+                            beads[idx+1].name,
+                            beads[idx+2].name,
+                            beads[idx+3].name
+                    ]
+                    _b1, _b4 = sorted(
+                            [b1, b4], key=_natural_sort
+                    )
+                    if [b2, b3] == sorted([b2, b3], key=_natural_sort):
+                        dihedral_type = "-".join((_b1, b2, b3, _b4))
+                    else:
+                        dihedral_type = "-".join((_b4, b3, b2, _b1))
+                    all_dihedrals.append(dihedral_type)
+                    dihedral_groups.append([idx, idx+1, idx+2, idx+3])
         except IndexError:
             pass
 
     types = list(set(all_types)) 
     pairs = list(set(all_pairs)) 
     angles = list(set(all_angles))
+    dihedrals = list(set(all_dihedrals))
     type_ids = [np.where(np.array(types)==i)[0][0] for i in all_types]
     pair_ids = [np.where(np.array(pairs)==i)[0][0] for i in all_pairs]
     angle_ids = [np.where(np.array(angles)==i)[0][0] for i in all_angles]
-
+    dihedral_ids = [np.where(np.array(dihedrals)==i)[0][0] for i in all_dihedrals]
     #Wrap the particle positions
     if rewrap:
         fbox = freud.box.Box(*box)
@@ -93,13 +116,21 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     s.angles.types = angles
     s.angles.typeid = np.array(angle_ids)
     s.angles.group = np.vstack(angle_groups)
+    #Dihedrals
+    s.dihedrals.N = len(all_dihedrals)
+    s.dihedrals.M = 4
+    s.dihedrals.types = dihedrals
+    s.dihedrals.typeid = np.array(dihedral_ids)
+    s.dihedrals.group = np.vstack(dihedral_groups)
+    #Box
     s.configuration.box = box 
     return s
+
 
 def _atoi(text):
     return int(text) if text.isdigit() else text
 
+
 def _natural_sort(text):
     """Break apart a string containing letters and digits."""
     return [_atoi(a) for a in re.split(r"(\d+)", text)]
-
