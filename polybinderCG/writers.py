@@ -1,8 +1,10 @@
+import re
+
 import gsd
 import gsd.hoomd
 import freud
 import numpy as np
-import re
+
 
 def write_snapshot(beads, rewrap=True, box_expand=None):
     """Creates a gsd.hoomd.snapshot of a coarse-grained mapping.
@@ -67,13 +69,10 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
                     _b1, _b4 = sorted(
                             [b1, b4], key=_natural_sort
                     )
-                    _b2 = b2
-                    _b3 = b3
-                    
-                    if [_b2, _b3] == sorted([_b2, _b3], key=_natural_sort):
-                        dihedral_type = "-".join((_b1, _b2, _b3, _b4))
+                    if [b2, b3] == sorted([b2, b3], key=_natural_sort):
+                        dihedral_type = "-".join((_b1, b2, b3, _b4))
                     else:
-                        dihedral_type = "-".join((_b4, _b3, _b2, _b1))
+                        dihedral_type = "-".join((_b4, b3, b2, _b1))
                     all_dihedrals.append(dihedral_type)
                     dihedral_groups.append([idx, idx+1, idx+2, idx+3])
         except IndexError:
@@ -87,7 +86,6 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     pair_ids = [np.where(np.array(pairs)==i)[0][0] for i in all_pairs]
     angle_ids = [np.where(np.array(angles)==i)[0][0] for i in all_angles]
     dihedral_ids = [np.where(np.array(dihedrals)==i)[0][0] for i in all_dihedrals]
-
     #Wrap the particle positions
     if rewrap:
         fbox = freud.box.Box(*box)
@@ -124,13 +122,15 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     s.dihedrals.types = dihedrals
     s.dihedrals.typeid = np.array(dihedral_ids)
     s.dihedrals.group = np.vstack(dihedral_groups)
+    #Box
     s.configuration.box = box 
     return s
+
 
 def _atoi(text):
     return int(text) if text.isdigit() else text
 
+
 def _natural_sort(text):
     """Break apart a string containing letters and digits."""
     return [_atoi(a) for a in re.split(r"(\d+)", text)]
-
