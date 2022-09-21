@@ -1,5 +1,5 @@
 from cmeutils.gsd_utils import get_molecule_cluster
-from polybinderCG.writers import write_snapshot
+from polybinderCG.writers import write_snapshot, write_compound
 import gsd
 import gsd.hoomd
 import freud
@@ -19,7 +19,7 @@ class System:
         self.mb_compound = mb_compound
         self.contains_H = self._check_for_Hs()
         self.molecule = molecule 
-        self.all_particles = [p for p in self.mb_compound.particles()]
+        self.all_particles = np.array([p for p in self.mb_compound.particles()])
         if self.molecule != None:
             try:
                 f = open(f"{COMPOUND_DIR}/{self.molecule}.json")
@@ -43,6 +43,15 @@ class System:
         self.n_molecules = 1 
         self.n_atoms = len(self.clusters)
         self.molecules = [Molecule(self, i) for i in self.molecule_ids] 
+
+    def save(self, use_monomers=False, use_segments=False, use_components=False):
+        if use_monomers:
+            structures = [i for i in self.monomers()]
+        elif use_segments:
+            structures = [i for i in self.segments()]
+        elif use_components:
+            structures = [i for i in self.components()]
+        return write_compound(structures)
 
     def monomers(self):
         """Generate all of the monomers from each molecule in System.molecules.

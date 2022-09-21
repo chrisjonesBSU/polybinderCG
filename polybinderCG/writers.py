@@ -16,7 +16,7 @@ def write_compound(beads):
         cg_compound.add(comp)
     for idx, comp in enumerate(comps):
         try:
-            cg_compound.add_bond(comp, comps[idx+1])
+            cg_compound.add_bond((comp, comps[idx+1]))
         except IndexError:
             pass
     return cg_compound
