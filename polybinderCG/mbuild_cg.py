@@ -215,7 +215,7 @@ class Structure:
                         self.atom_positions, self.atom_masses
                     )
                 ]) / self.mass 
-        return com 
+        return com[0] 
 
 
 class Molecule(Structure):
