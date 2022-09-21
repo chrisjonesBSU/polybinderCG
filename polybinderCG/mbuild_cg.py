@@ -14,36 +14,28 @@ class System:
     """
     """
     def __init__(
-            self,
-            molecule=None,
-            atoms_per_monomer=None,
-            mb_compound=None,
+            self, mb_compound, molecule=None, atoms_per_monomer=None,
     ):
         self.mb_compound = mb_compound
         self.contains_H = self._check_for_Hs()
         self.molecule = molecule 
         self.all_particles = [p for p in self.mb_compound.particles()]
-        if self.compound != None:
+        if self.molecule != None:
             try:
-                f = open(f"{COMPOUND_DIR}/{self.compound}.json")
+                f = open(f"{COMPOUND_DIR}/{self.molecule}.json")
             except FileNotFoundError:
                 raise ValueError(
-                    f"No file was found in {COMPOUND_DIR} for {self.compound}"
+                    f"No file was found in {COMPOUND_DIR} for {self.molecule}"
                 )
             self.comp_dict = json.load(f) 
             f.close()
             if self.contains_H:
-                self.atoms_per_monomer = self.comp_dict[
-                        "atoms_per_monomer_AA"
-                        ]
+                self.atoms_per_monomer = self.comp_dict["atoms_per_monomer_AA"]
             elif not self.contains_H:
-                self.atoms_per_monomer = self.comp_dict[
-                        "atoms_per_monomer_UA"
-                ]
-        elif self.compound == None:
+                self.atoms_per_monomer = self.comp_dict["atoms_per_monomer_UA"]
+        elif self.molecule == None:
             self.atoms_per_monomer = atoms_per_monomer
 
-        self.clusters = get_molecule_cluster(snap=self.snap)
         self.clusters = [0 for i in range(self.mb_compound.n_particles)]
         self.molecule_ids = set(self.clusters)
         self.n_molecules = 1 
@@ -322,8 +314,7 @@ class Molecule(Structure):
         """
         segments_per_molecule = int(self.n_monomers / monomers_per_segment)
         segment_indices = np.array_split(
-                self.atom_indices,
-                segments_per_molecule
+                self.atom_indices, segments_per_molecule
         )
         self.segments.extend([Segment(self, i) for i in segment_indices])
     
@@ -418,9 +409,7 @@ class Molecule(Structure):
 
         """
         sub_structures = self._sub_structures(
-                use_monomers,
-                use_segments,
-                use_components
+                use_monomers, use_segments, use_components
         )
 
         angles = []
@@ -429,9 +418,7 @@ class Molecule(Structure):
                 s2 = sub_structures[idx+1]
                 s3 = sub_structures[idx+2]
                 if group is not None:
-                    if list(group) == [s.name, s2.name, s3.name]:
-                        pass
-                    else:
+                    if list(group) != [s.name, s2.name, s3.name]:
                         continue
                 v1 = (s.unwrapped_center - s2.unwrapped_center)
                 v2 = (s3.unwrapped_center - s2.unwrapped_center)
@@ -535,9 +522,7 @@ class Molecule(Structure):
 
         """
         sub_structures = self._sub_structures(
-                use_monomers,
-                use_segments,
-                use_components
+                use_monomers, use_segments, use_components
         )
         struc_pos = np.array([s.unwrapped_center for s in sub_structures])
         mol_center = self.unwrapped_center
