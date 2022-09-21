@@ -1,8 +1,4 @@
-from cmeutils.gsd_utils import get_molecule_cluster
-from polybinderCG.writers import write_snapshot, write_compound
-import gsd
-import gsd.hoomd
-import freud
+from polybinderCG.writers import write_compound
 import json
 import numpy as np
 from polybinderCG.compounds import COMPOUND_DIR
@@ -90,7 +86,7 @@ class System:
                 yield component
 
     def _check_for_Hs(self):
-        """Returns True if the gsd snapshot contains hydrogen type atoms"""
+        """Returns True if the mb.Compound contains hydrogen type atoms"""
         hydrogen_types = ["ha", "h", "ho", "h4", "opls_146", "opls_204"]
         return "H" in [p.name for p in self.mb_compound.particles()]
 
@@ -101,7 +97,7 @@ class Structure:
     Parameters:
     -----------
     system : 'System()', required
-        The system object initially created from the input .gsd file.
+        The system object initially created from the input compound.
     atom_indices : np.ndarray(n, 3), optional, default=None
         The atom indices in the system that belong to this specific structure.
     molecule_id : int, optional, default=None
@@ -140,6 +136,7 @@ class Structure:
         else:
             self.atom_indices = atom_indices
         self.n_atoms = len(self.atom_indices)
+
     def generate_monomers(self):
         if isinstance(self, Monomer):
             return self
@@ -260,10 +257,7 @@ class Molecule(Structure):
         self.sequence = None
 
     def assign_types(
-            self,
-            use_monomers=True,
-            use_segments=False,
-            use_components=False
+            self, use_monomers=True, use_segments=False, use_components=False
     ):
         """Assigns the type names to each child monomer bead.
         Requires that self.sequence attribute is defined behond hand.
@@ -539,11 +533,6 @@ class Molecule(Structure):
                 np.sum([(i - mol_center)**2 for i in struc_pos])
             ) / len(struc_pos)
         return radius_of_gyration
-
-    def persistence_length(self):
-        ""
-        ""
-        pass
 
     def _sub_structures(self, monomers, segments, components):
         args = [monomers, segments, components]
