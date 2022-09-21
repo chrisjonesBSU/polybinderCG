@@ -36,7 +36,9 @@ class System:
         elif self.molecule == None:
             self.atoms_per_monomer = atoms_per_monomer
 
-        self.clusters = [0 for i in range(self.mb_compound.n_particles)]
+        self.clusters = np.array(
+                [0 for i in range(self.mb_compound.n_particles)]
+        )
         self.molecule_ids = set(self.clusters)
         self.n_molecules = 1 
         self.n_atoms = len(self.clusters)
@@ -129,7 +131,6 @@ class Structure:
         else:
             self.atom_indices = atom_indices
         self.n_atoms = len(self.atom_indices)
-
     def generate_monomers(self):
         if isinstance(self, Monomer):
             return self
@@ -241,8 +242,7 @@ class Molecule(Structure):
     """
     def __init__(self, system, molecule_id):
         super(Molecule, self).__init__(
-                system=system,
-                molecule_id=molecule_id
+                system=system, molecule_id=molecule_id
         )
         self.monomers = self.generate_monomers() 
         self.n_monomers = len(self.monomers)
