@@ -9,18 +9,19 @@ from polybinderCG.compounds import COMPOUND_DIR
 
 from math import atan2
 
+
 class System:
     """
     """
     def __init__(
             self,
-            compound=None,
+            molecule=None,
             atoms_per_monomer=None,
             mb_compound=None,
     ):
         self.mb_compound = mb_compound
         self.contains_H = self._check_for_Hs()
-        self.compound = compound
+        self.molecule = molecule 
         self.all_particles = [p for p in self.mb_compound.particles()]
         if self.compound != None:
             try:
