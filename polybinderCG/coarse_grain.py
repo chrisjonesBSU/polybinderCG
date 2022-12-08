@@ -394,6 +394,18 @@ class Structure:
         return sum(self.system.snap.particles.mass[self.atom_indices])
 
     @property
+    def velocity(self):
+        return sum(self.system.snap.particles.velocity[self.atom_indices])
+
+    @property
+    def momentum(self):
+        return self.velocity * self.mass
+    
+    @property
+    def kinetic_energy(self):
+        return 0.5 * self.mass * (self.velocity**2)
+
+    @property
     def center(self):
         """The (x,y,z) position of the center of the structure accounting
         for the periodic boundaries in the system.
