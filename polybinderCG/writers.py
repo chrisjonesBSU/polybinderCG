@@ -37,12 +37,14 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     dihedral_groups = []
     all_pos = []
     masses = []
+    velocities = []
     box = beads[0].system.box 
 
     for idx, bead in enumerate(beads):
         all_types.append(bead.name)
         all_pos.append(bead.unwrapped_center)
         masses.append(bead.mass)
+        velocities.append(bead.velocity)
 
         try:
             # Add bond type and group indices
@@ -103,6 +105,7 @@ def write_snapshot(beads, rewrap=True, box_expand=None):
     s.particles.typeid = np.array(type_ids) 
     s.particles.position = w_positions 
     s.particles.mass = masses
+    s.particles.velocity = velocities
     s.particles.image = w_images
     #Bonds
     s.bonds.N = len(all_pairs)
