@@ -428,7 +428,9 @@ class Structure:
 
     @property
     def velocity(self):
-        return sum(self.system.snap.particles.velocity[self.atom_indices])
+        return sum(
+                self.system.snap.particles.velocity[self.atom_indices]
+        ) / self.n_atoms
 
     @property
     def momentum(self):
