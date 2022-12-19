@@ -87,7 +87,6 @@ class System:
 
     def _check_for_Hs(self):
         """Returns True if the mb.Compound contains hydrogen type atoms"""
-        hydrogen_types = ["ha", "h", "ho", "h4", "opls_146", "opls_204"]
         return "H" in [p.name for p in self.mb_compound.particles()]
 
 
