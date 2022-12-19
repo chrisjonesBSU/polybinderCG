@@ -7,7 +7,7 @@ import json
 import numpy as np
 from polybinderCG.compounds import COMPOUND_DIR
 
-from math import atan2
+import math
 
 class System:
     """
@@ -95,6 +95,39 @@ class System:
                 )
                 f.append(snap)
         self.update_frame(frame=current_frame)
+
+    def rename_center_chunk(
+            self,
+            chunk_size,
+            use_monomers=False,
+            use_segments=False,
+            use_components=False
+    ):
+        """
+        """
+        for mol in self.molecules:
+            if use_monomers:
+                structures = mol.monomers
+            elif use_segments:
+                if len(self.molecules[0].segments) == 0:
+                    raise ValueError("Segments have not been created. "
+                            "See the generate_segments method in "
+                            "the Molecule class."
+                    )
+                structures = mol.segments
+            elif use_components:
+                if len(self.molecules[0].components) == 0:
+                    raise ValueError("Components have not been generated. "
+                            "See the generate_components method in "
+                            "the Monomer class. "
+                    )
+                structures = mol.components
+
+            mid_idx = int(len(structures)/2 - 1)
+            start_idx = mid_idx - math.floor(chunk_size/2)
+            end_idx = mid_idx + math.ceil(chunk_size/2)
+            for struc in structures[start_idx:end_idx]:
+                struc.name = "X"
 
     def coarse_grain_snap(
             self, use_monomers=False, use_segments=False, use_components=False
@@ -392,6 +425,20 @@ class Structure:
     def mass(self):
         """The mass of the structure"""
         return sum(self.system.snap.particles.mass[self.atom_indices])
+
+    @property
+    def velocity(self):
+        return sum(
+                self.system.snap.particles.velocity[self.atom_indices]
+        ) / self.n_atoms
+
+    @property
+    def momentum(self):
+        return self.velocity * self.mass
+    
+    @property
+    def kinetic_energy(self):
+        return 0.5 * self.mass * (self.velocity**2)
 
     @property
     def center(self):
