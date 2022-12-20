@@ -3,7 +3,23 @@ import re
 import gsd
 import gsd.hoomd
 import freud
+import mbuild as mb
 import numpy as np
+
+
+def write_compound(beads):
+    cg_compound = mb.Compound()
+    comps = []
+    for bead in beads:
+        comp = mb.Compound(pos=bead.center, mass=bead.mass, name=bead.name)
+        comps.append(comp)
+        cg_compound.add(comp)
+    for idx, comp in enumerate(comps):
+        try:
+            cg_compound.add_bond((comp, comps[idx+1]))
+        except IndexError:
+            pass
+    return cg_compound
 
 
 def write_snapshot(beads, rewrap=True, box_expand=None):
