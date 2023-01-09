@@ -10,11 +10,18 @@ class System:
     """
     """
     def __init__(
-            self, mb_compound, molecule=None, atoms_per_monomer=None,
+            self,
+            mb_compound,
+            molecule=None,
+            atoms_per_monomer=None,
+            ref_distance=1.0,
+            ref_mass=1.0
     ):
         self.mb_compound = mb_compound
         self.contains_H = self._check_for_Hs()
         self.molecule = molecule 
+        self.ref_distance = ref_distance
+        self.ref_mass = ref_mass
         self.all_particles = np.array([p for p in self.mb_compound.particles()])
         if self.molecule != None:
             try:
@@ -177,8 +184,10 @@ class Structure:
         numpy.ndarray, shape=(n, 3), dtype=float
 
         """
-        return np.array([p.xyz for p in self.system.all_particles[self.atom_indices]])
-        #return self.system.snap.particles.position[self.atom_indices]
+        positions = np.array(
+                [p.xyz for p in self.system.all_particles[self.atom_indices]]
+        ) / self.system.ref_distance
+        return positions
 
     @property
     def atom_masses(self):
@@ -189,13 +198,15 @@ class Structure:
         numpy.ndarray, shape=(n, 1), dtype=float
 
         """
-        return np.array([p.mass for p in self.system.all_particles[self.atom_indices]])
+        masses = np.array(
+                [p.mass for p in self.system.all_particles[self.atom_indices]]
+        ) / self.system.ref_mass
+        return masses
     
     @property
     def mass(self):
         """The mass of the structure"""
         return sum(self.atom_masses)
-        #return sum(self.system.snap.particles.mass[self.atom_indices])
 
     @property
     def center(self):
