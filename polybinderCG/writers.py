@@ -12,6 +12,7 @@ def write_compound(beads):
     comps = []
     for bead in beads:
         comp = mb.Compound(pos=bead.center, mass=bead.mass, name=bead.name)
+        comp.element = None
         comps.append(comp)
         cg_compound.add(comp)
     for idx, comp in enumerate(comps):
