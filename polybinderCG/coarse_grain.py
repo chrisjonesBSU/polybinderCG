@@ -85,7 +85,7 @@ class System:
             first_frame = self.n_frames + first_frame
         if last_frame < 0:
             last_frame = self.n_frames + last_frame + 1
-        with gsd.hoomd.open(file_path, mode="wb") as f:
+        with gsd.hoomd.open(file_path, mode="w") as f:
             for i in range(first_frame, last_frame):
                 self.update_frame(frame=i)
                 snap = self.coarse_grain_snap(
@@ -317,7 +317,7 @@ class System:
     def update_frame(self, frame):
         """Change the frame of the atomistic trajectory."""
         self.frame = frame
-        with gsd.hoomd.open(self.gsd_file, mode="rb") as f:
+        with gsd.hoomd.open(self.gsd_file, mode="r") as f:
             self.snap = f[frame]
             self.box = self.snap.configuration.box
             self.n_frames = len(f) 
